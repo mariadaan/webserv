@@ -1,3 +1,4 @@
+#include "ParsedRequest.hpp"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -22,7 +23,7 @@ int main() {
   std::memset(&address, 0, sizeof(address)); // pad the structure to the length of a struct sockaddr. set to zero
   address.sin_family = AF_INET; // IPv4
   address.sin_addr.s_addr = INADDR_ANY; // local address
-  address.sin_port = htons(PORT); // convert to network byte order 
+  address.sin_port = htons(PORT); // convert to network byte order
 
   // the bind function is used to bind the socket sockfd to address and port 8080. This allows the socket to send and receive data on the specified port.
   if (bind(sockfd, (sockaddr*) &address, sizeof(address)) < 0) {
@@ -52,8 +53,8 @@ int main() {
     int bytes_read = read(client_sockfd, buffer, sizeof(buffer));
     std::string request(buffer, bytes_read);
 
-    std::cout << "Received request:" << std::endl;
-    std::cout << request << std::endl;
+	ParsedRequest req(request);
+	std::cout << req << std::endl;
 
     // Send the response
     std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";

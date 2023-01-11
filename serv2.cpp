@@ -18,6 +18,104 @@ int PORT = 8080;
 const int BACKLOG = 5;
 #include <sstream>
 
+int accept_client(int sockfd, int kq) {
+	sockaddr_in client_address;
+	socklen_t client_address_len = sizeof(client_address);
+	int client_sockfd;
+
+	client_sockfd = accept(sockfd, (sockaddr*) &client_address, &client_address_len);
+	if (client_sockfd <= 0) {
+		std::cerr << "Error: accept" << std::endl;
+		return -1;
+	}
+
+	struct kevent kev;
+	EV_SET(&kev, client_sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 5, 6, 7
+	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+	if (ret == -1) {
+		std::cerr << "Error adding event listener	" << std::endl;
+		return -1;
+	}
+	if (kev.flags & EV_ERROR) {
+		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+		return -1;
+	}
+
+	std::cerr << "Accepted client: " << client_sockfd << std::endl;
+	return 0;
+}
+
+int remove_client(int kq, int client_sockfd) {
+	struct kevent kev;
+	EV_SET(&kev, client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL); // don't know args 5, 6, 7
+	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+	if (ret == -1) {
+		std::cerr << "Error removing event listener" << std::endl;
+		return -1;
+	}
+	if (kev.flags & EV_ERROR) {
+		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+		return -1;
+	}
+	close(client_sockfd);
+	return 0;
+}
+
+int handle_client(int client_sockfd, int kq) {
+	char buffer[1024];
+	int bytes_read = read(client_sockfd, buffer, sizeof(buffer));
+	std::string request(buffer, bytes_read);
+
+	std::cout << "Received request:" << std::endl;
+	std::cout << request << std::endl;
+
+	// Send the response
+	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
+	write(client_sockfd, response.c_str(), response.size());
+
+	if (remove_client(kq, client_sockfd) != 0) // NOTE: Do not do this with chunked requests
+		return -1;
+
+	return 0;
+}
+
+int add_server_listener(int kq, int sockfd) {
+	// Add a listener to the kqueue
+	struct kevent kev;
+	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
+	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+	if (ret == -1) {
+		std::cerr << "Error adding event listener	" << std::endl;
+		return -1;
+	}
+	if (kev.flags & EV_ERROR) {
+		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+		return -1;
+	}
+	return 0;
+}
+
+void loop(int kq, int sockfd) {
+	struct kevent ev_rec;
+
+	while (true) {
+		int ret = kevent(kq, NULL, 0, &ev_rec, 1, NULL);
+		if (ret == -1) {
+			std::cerr << "Error: kevent wait" << std::endl;
+			return ;
+		}
+
+		if (ev_rec.ident == sockfd) {
+			if (accept_client(sockfd, kq) != 0)
+				return ;
+		}
+		else {
+			if (handle_client(ev_rec.ident, kq) != 0)
+				return ;
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
 	signal(SIGINT, handle);
 
@@ -56,91 +154,20 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "Listening on port " << PORT << std::endl;
 
-	// Accept incoming connections
-	sockaddr_in client_address;
-	socklen_t client_address_len = sizeof(client_address);
-	int client_sockfd;
-	// the accept function is used to accept an incoming connection on the socket sockfd and create a new socket client_sockfd for the client.
-	// The address of the client is stored in the client_address structure, and the address of the server is stored in the serv_addr structure.
-	// The new socket client_sockfd can be used to communicate with the client.
-
+	// Create a kqueue
 	int kq = kqueue();
 	if (kq == -1) {
 		std::cerr << "Error creating kqueue" << std::endl;
 		return 1;
 	}
 
-	struct kevent kev;
-	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
-	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
-	if (ret == -1) {
-		std::cerr << "Error adding event listener	" << std::endl;
-		close(client_sockfd);
+	if (add_server_listener(kq, sockfd) != 0)
+	{
 		close(sockfd);
 		return 1;
 	}
-	if (kev.flags & EV_ERROR) {
-		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
-		return 1;
-	}
-	struct kevent tkev;
-	std::cout << "Waiting for event on sockfd: " << sockfd << std::endl;
-	ret = kevent(kq, NULL, 0, &tkev, 1, NULL); // don't know args 3, 5, 6
-	if (ret == -1) {
-		std::cerr << "Error: kevent wait" << std::endl;
-		return 1;
-	}
-	std::cout << "Got event on sockfd: " << sockfd << std::endl;
 
-	while ((client_sockfd = accept(sockfd, (sockaddr*) &client_address, &client_address_len)) > 0) {
-		struct kevent kev;
-		EV_SET(&kev, client_sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
-		int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
-		if (ret == -1) {
-			std::cerr << "Error adding event listener	" << std::endl;
-			close(client_sockfd);
-			close(sockfd);
-			return 1;
-		}
-		if (kev.flags & EV_ERROR) {
-	    	std::cerr << "Event error: " << strerror(kev.data) << std::endl;
-			return 1;
-		}
-
-		struct kevent tkev;
-		for (;;) { // loop forever (not neccecary in this specific case)
-			ret = kevent(kq, NULL, 0, &tkev, 1, NULL); // don't know args 3, 5, 6
-			if (ret == -1) {
-				std::cerr << "Error: kevent wait" << std::endl;
-				return 1;
-			}
-
-			char buffer[1024];
-			int bytes_read = read(client_sockfd, buffer, sizeof(buffer));
-			std::string request(buffer, bytes_read);
-
-			std::cout << "Received request:" << std::endl;
-			std::cout << request << std::endl;
-
-			// Send the response
-			std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
-			write(tkev.ident, response.c_str(), response.size());
-			EV_SET(&kev, client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
-			int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
-			if (ret == -1) {
-				std::cerr << "Error adding event listener	" << std::endl;
-				close(client_sockfd);
-				close(sockfd);
-				return 1;
-			}
-			if (kev.flags & EV_ERROR) {
-				std::cerr << "Event error: " << strerror(kev.data) << std::endl;
-				return 1;
-			}
-			close(tkev.ident);
-			break;
-		}
-	}
+	loop(kq, sockfd);
 
 	// Close the socket
 	close(sockfd);

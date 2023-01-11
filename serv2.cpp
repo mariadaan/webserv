@@ -1,0 +1,149 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/event.h> // kqueue
+
+int sockfd;
+
+void handle(int s) {
+	close(sockfd);
+	exit(1);
+}
+
+int PORT = 8080;
+const int BACKLOG = 5;
+#include <sstream>
+
+int main(int argc, char *argv[]) {
+	signal(SIGINT, handle);
+
+	if (argc > 1) {
+		std::stringstream ss;
+		std::string s(argv[1]);
+		ss << s;
+		ss >> PORT;
+	}
+	// Create a socket
+	sockfd = socket(AF_INET, SOCK_STREAM, 0); // actually just a file descriptor that we will read (but we will use recv) and write (we will use send) to
+	if (sockfd < 0) {
+		std::cerr << "Error creating socket" << std::endl;
+		return 1;
+	}
+
+	// Bind the socket to an address and port
+	sockaddr_in address;
+	std::memset(&address, 0, sizeof(address)); // pad the structure to the length of a struct sockaddr. set to zero
+	address.sin_family = AF_INET; // IPv4
+	address.sin_addr.s_addr = INADDR_ANY; // local address
+	address.sin_port = htons(PORT); // convert to network byte order
+
+	// the bind function is used to bind the socket sockfd to address and port 8080. This allows the socket to send and receive data on the specified port.
+	if (bind(sockfd, (sockaddr*) &address, sizeof(address)) < 0) {
+		std::cerr << "Error binding socket" << std::endl;
+		return 1;
+	}
+
+	// Start listening for incoming connections
+	// the listen function is used to place the socket sockfd in a listening state, with a backlog queue size of 5. This allows the socket to accept incoming connections from client sockets.
+	if (listen(sockfd, BACKLOG) < 0) {
+		std::cerr << "Error listening on socket" << std::endl;
+		return 1;
+	}
+
+	std::cout << "Listening on port " << PORT << std::endl;
+
+	// Accept incoming connections
+	sockaddr_in client_address;
+	socklen_t client_address_len = sizeof(client_address);
+	int client_sockfd;
+	// the accept function is used to accept an incoming connection on the socket sockfd and create a new socket client_sockfd for the client.
+	// The address of the client is stored in the client_address structure, and the address of the server is stored in the serv_addr structure.
+	// The new socket client_sockfd can be used to communicate with the client.
+
+	int kq = kqueue();
+	if (kq == -1) {
+		std::cerr << "Error creating kqueue" << std::endl;
+		return 1;
+	}
+
+	struct kevent kev;
+	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
+	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+	if (ret == -1) {
+		std::cerr << "Error adding event listener	" << std::endl;
+		close(client_sockfd);
+		close(sockfd);
+		return 1;
+	}
+	if (kev.flags & EV_ERROR) {
+		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+		return 1;
+	}
+	struct kevent tkev;
+	std::cout << "Waiting for event on sockfd: " << sockfd << std::endl;
+	ret = kevent(kq, NULL, 0, &tkev, 1, NULL); // don't know args 3, 5, 6
+	if (ret == -1) {
+		std::cerr << "Error: kevent wait" << std::endl;
+		return 1;
+	}
+	std::cout << "Got event on sockfd: " << sockfd << std::endl;
+
+	while ((client_sockfd = accept(sockfd, (sockaddr*) &client_address, &client_address_len)) > 0) {
+		struct kevent kev;
+		EV_SET(&kev, client_sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
+		int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+		if (ret == -1) {
+			std::cerr << "Error adding event listener	" << std::endl;
+			close(client_sockfd);
+			close(sockfd);
+			return 1;
+		}
+		if (kev.flags & EV_ERROR) {
+	    	std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+			return 1;
+		}
+
+		struct kevent tkev;
+		for (;;) { // loop forever (not neccecary in this specific case)
+			ret = kevent(kq, NULL, 0, &tkev, 1, NULL); // don't know args 3, 5, 6
+			if (ret == -1) {
+				std::cerr << "Error: kevent wait" << std::endl;
+				return 1;
+			}
+
+			char buffer[1024];
+			int bytes_read = read(client_sockfd, buffer, sizeof(buffer));
+			std::string request(buffer, bytes_read);
+
+			std::cout << "Received request:" << std::endl;
+			std::cout << request << std::endl;
+
+			// Send the response
+			std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
+			write(tkev.ident, response.c_str(), response.size());
+			EV_SET(&kev, client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL); // don't know args 3, 4, 5, 6, 7
+			int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
+			if (ret == -1) {
+				std::cerr << "Error adding event listener	" << std::endl;
+				close(client_sockfd);
+				close(sockfd);
+				return 1;
+			}
+			if (kev.flags & EV_ERROR) {
+				std::cerr << "Event error: " << strerror(kev.data) << std::endl;
+				return 1;
+			}
+			close(tkev.ident);
+			break;
+		}
+	}
+
+	// Close the socket
+	close(sockfd);
+
+	return 0;
+}

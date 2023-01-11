@@ -2,6 +2,22 @@
 #include <algorithm>
 #include <cctype>
 
+std::ostream &operator<<(std::ostream &os, const Method &method) {
+	static std::map<Method, std::string> methods;
+	methods[GET] = "GET";
+	methods[POST] = "POST";
+	methods[PUT] = "PUT";
+	methods[DELETE] = "DELETE";
+	methods[HEAD] = "HEAD";
+	methods[CONNECT] = "CONNECT";
+	methods[OPTIONS] = "OPTIONS";
+	methods[TRACE] = "TRACE";
+	methods[PATCH] = "PATCH";
+	methods[UNKNOWN] = "??? UNKNOWN ???";
+	os << methods[method];
+	return os;
+}
+
 static std::vector<std::string> split_string(std::string str, std::string delim) {
 	std::vector<std::string> result;
 	size_t pos = 0;

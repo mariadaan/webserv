@@ -15,6 +15,7 @@ enum Method {
 	PATCH,
 	UNKNOWN
 };
+std::ostream &operator<<(std::ostream &os, const Method &req);
 
 struct ParsedRequest {
 	Method method;

@@ -1,4 +1,6 @@
 #include "ParsedRequest.hpp"
+#include <algorithm>
+#include <cctype>
 
 static std::vector<std::string> split_string(std::string str, std::string delim) {
 	std::vector<std::string> result;
@@ -28,7 +30,7 @@ ParsedRequest::ParsedRequest(std::string str) {
 	std::vector<std::string> first_line_parts = split_string(lines[0], " ");
 	if (first_line_parts.size() != 3) {
 		std::cout << "Invalid first line" << std::endl;
-		exit(1);
+		exit(1); // TODO: throw exception
 	}
 	this->method = ParsedRequest::parse_method(first_line_parts[0]);
 	this->path = first_line_parts[1];
@@ -53,6 +55,10 @@ Method ParsedRequest::parse_method(std::string method_str) {
 	return UNKNOWN;
 }
 
+static unsigned char low(char c) {
+	return std::tolower(c);
+}
+
 std::map<std::string, std::string>	ParsedRequest::parse_headers(std::vector<std::string> const lines) {
 	std::map<std::string, std::string> headers;
 	std::string delimiter(": ");
@@ -61,6 +67,7 @@ std::map<std::string, std::string>	ParsedRequest::parse_headers(std::vector<std:
 		std::string line = *it;
 		size_t delim_pos = line.find(delimiter);
 		std::string key = line.substr(0, delim_pos);
+		std::transform(key.begin(), key.end(), key.begin(), &low );
 		std::string value = line.substr(delim_pos + delim_length);
 		headers[key] = value;
 	}

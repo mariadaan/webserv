@@ -17,7 +17,8 @@ enum Method {
 };
 std::ostream &operator<<(std::ostream &os, const Method &req);
 
-struct ParsedRequest {
+class ParsedRequest {
+public:
 	Method method;
 	std::string path;
 	std::string version;
@@ -26,9 +27,9 @@ struct ParsedRequest {
 
 	ParsedRequest(std::string str);
 
-	private:
-		static Method	parse_method(std::string method_str);
-		static std::map<std::string, std::string>	parse_headers(std::vector<std::string> lines);
+private:
+	static Method	parse_method(std::string method_str);
+	static std::map<std::string, std::string>	parse_headers(std::vector<std::string> lines);
 };
 
 std::ostream &operator<<(std::ostream &os, const ParsedRequest &req);

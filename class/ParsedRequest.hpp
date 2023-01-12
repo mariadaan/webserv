@@ -1,3 +1,6 @@
+#ifndef PARSEDREQUEST_HPP
+# define PARSEDREQUEST_HPP
+
 #include <vector>
 #include <map>
 #include <string>
@@ -33,3 +36,5 @@ private:
 };
 
 std::ostream &operator<<(std::ostream &os, const ParsedRequest &req);
+
+#endif

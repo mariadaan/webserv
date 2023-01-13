@@ -7,6 +7,22 @@ EventQueue::EventQueue(int server_sockfd) : _server_sockfd(server_sockfd) {
 		throw std::runtime_error("Error creating kqueue");
 }
 
+/* Used for both add server listener at the very start, and adding client events */
+void EventQueue::add_event_listener(int sockfd) {
+	struct kevent kev;
+
+	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	int ret = kevent(_kq, &kev, 1, NULL, 0, NULL);
+	if (ret == -1) {
+		close(sockfd); // what happens when you try to close an fd that was never opened?
+		throw std::runtime_error("Error adding event listener");
+	}
+	if (kev.flags & EV_ERROR) {
+		close(sockfd);
+		throw std::runtime_error("Event error: " + std::string(strerror(kev.data)));
+	}
+}
+
 void EventQueue::event_loop(void) {
 	struct kevent ev_rec;
 
@@ -23,21 +39,6 @@ void EventQueue::event_loop(void) {
 	}
 }
 
-void EventQueue::add_event_listener(int sockfd) {
-	struct kevent kev;
-
-	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	int ret = kevent(_kq, &kev, 1, NULL, 0, NULL);
-	if (ret == -1) {
-		close(sockfd); // what happens when you try to close an fd that was never opened?
-		throw std::runtime_error("Error adding event listener");
-	}
-	if (kev.flags & EV_ERROR) {
-		close(sockfd);
-		throw std::runtime_error("Event error: " + std::string(strerror(kev.data)));
-	}
-}
-
 void EventQueue::accept_client(int server_sockfd) {
 	Client client;
 
@@ -51,6 +52,7 @@ void EventQueue::accept_client(int server_sockfd) {
 	std::cerr << "Accepted client: " << client.get_sockfd() << std::endl;
 }
 
+/* TODO: deze functie verbeteren, request doorsturen aan parser en evt aan CGI */
 void EventQueue::handle_client(int client_sockfd) {
 	char buffer[1024];
 	int bytes_read = read(client_sockfd, buffer, sizeof(buffer));

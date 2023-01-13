@@ -15,16 +15,17 @@ class EventQueue
 public:
 	EventQueue(int server_sockfd);
 
-	void	add_server_listener(void);
-	void	wait_for_events(void);
+	void	add_event_listener(int sockfd);
+	void	event_loop(void);
+
+	void	accept_client(int sockfd);
+	void	handle_client(int client_sockfd);
+	void	remove_client(int client_sockfd);
 
 private:
 	int		_kq;
 	int		_server_sockfd;
 };
 
-int accept_client(int sockfd, int kq);
-int remove_client(int kq, int client_sockfd);
-int handle_client(int client_sockfd, int kq);
 
 #endif

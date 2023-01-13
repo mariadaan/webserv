@@ -17,8 +17,7 @@ int main(int argc, char *argv[]) {
 		ss << s;
 		ss >> PORT;
 	}
-	try
-	{
+	try {
 		Socket serverSocket(PF_INET, SOCK_STREAM, 0);
 		serverSocket.set_address(PORT);
 		serverSocket.bind();
@@ -27,12 +26,11 @@ int main(int argc, char *argv[]) {
 		std::cout << "Listening on port " << PORT << std::endl;
 
 		EventQueue keventQueue(serverSocket.get_sockfd());
-		keventQueue.add_server_listener();
-		keventQueue.wait_for_events();
+		keventQueue.add_event_listener(serverSocket.get_sockfd());
+		keventQueue.event_loop();
 		serverSocket.close();
 	}
-	catch(const std::exception& e)
-	{
+	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
 	}
 

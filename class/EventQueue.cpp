@@ -1,4 +1,5 @@
 #include "EventQueue.hpp"
+#include "Client.hpp"
 
 EventQueue::EventQueue(int server_sockfd) : _server_sockfd(server_sockfd) {
 	this->_kq = kqueue();
@@ -6,88 +7,51 @@ EventQueue::EventQueue(int server_sockfd) : _server_sockfd(server_sockfd) {
 		throw std::runtime_error("Error creating kqueue");
 }
 
-void EventQueue::add_server_listener(void)
-{
+void EventQueue::event_loop(void) {
+	struct kevent ev_rec;
+
+	while (true) {
+		// ev_rec's attributes are filled with the event that come in on the kqueue (_kq)
+		// the client fd is stored in ev_rec.ident
+		int num_events = kevent(_kq, NULL, 0, &ev_rec, 1, NULL);
+		if (num_events == -1)
+			throw std::runtime_error("Error: kevent wait");
+		if (ev_rec.ident == _server_sockfd)
+			this->accept_client(_server_sockfd);
+		else
+			this->handle_client(ev_rec.ident);
+	}
+}
+
+void EventQueue::add_event_listener(int sockfd) {
 	struct kevent kev;
 
-	EV_SET(&kev, _server_sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	int ret = kevent(_kq, &kev, 1, NULL, 0, NULL);
 	if (ret == -1) {
-		close(_server_sockfd);
+		close(sockfd); // what happens when you try to close an fd that was never opened?
 		throw std::runtime_error("Error adding event listener");
 	}
 	if (kev.flags & EV_ERROR) {
-		close(_server_sockfd);
+		close(sockfd);
 		throw std::runtime_error("Event error: " + std::string(strerror(kev.data)));
 	}
 }
 
-void EventQueue::wait_for_events(void)
-{
-	struct kevent ev_rec;
+void EventQueue::accept_client(int server_sockfd) {
+	Client client;
 
-	while (true) {
-		int ret = kevent(_kq, NULL, 0, &ev_rec, 1, NULL);
-		if (ret == -1) {
-			std::cerr << "Error: kevent wait" << std::endl;
-			return ;
-		}
-
-		if (ev_rec.ident == _server_sockfd) {
-			if (accept_client(_server_sockfd, _kq) != 0)
-				return ;
-		}
-		else {
-			if (handle_client(ev_rec.ident, _kq) != 0)
-				return ;
-		}
+	try {
+		client.accept(server_sockfd);
+		this->add_event_listener(client.get_sockfd());
 	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+	}
+	std::cerr << "Accepted client: " << client.get_sockfd() << std::endl;
 }
 
-int accept_client(int sockfd, int kq) {
-	sockaddr_in client_address;
-	socklen_t client_address_len = sizeof(client_address);
-	int client_sockfd;
-
-	client_sockfd = accept(sockfd, (sockaddr*) &client_address, &client_address_len);
-	if (client_sockfd <= 0) {
-		std::cerr << "Error: accept" << std::endl;
-		return -1;
-	}
-
-	struct kevent kev;
-	EV_SET(&kev, client_sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL); // don't know args 5, 6, 7
-	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
-	if (ret == -1) {
-		std::cerr << "Error adding event listener	" << std::endl;
-		return -1;
-	}
-	if (kev.flags & EV_ERROR) {
-		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
-		return -1;
-	}
-
-	std::cerr << "Accepted client: " << client_sockfd << std::endl;
-	return 0;
-}
-
-int remove_client(int kq, int client_sockfd) {
-	struct kevent kev;
-	EV_SET(&kev, client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL); // don't know args 5, 6, 7
-	int ret = kevent(kq, &kev, 1, NULL, 0, NULL); // don't know args 3, 5, 6
-	if (ret == -1) {
-		std::cerr << "Error removing event listener" << std::endl;
-		return -1;
-	}
-	if (kev.flags & EV_ERROR) {
-		std::cerr << "Event error: " << strerror(kev.data) << std::endl;
-		return -1;
-	}
-	close(client_sockfd);
-	return 0;
-}
-
-int handle_client(int client_sockfd, int kq) {
+void EventQueue::handle_client(int client_sockfd) {
 	char buffer[1024];
 	int bytes_read = read(client_sockfd, buffer, sizeof(buffer));
 	std::string request(buffer, bytes_read);
@@ -99,8 +63,17 @@ int handle_client(int client_sockfd, int kq) {
 	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
 	write(client_sockfd, response.c_str(), response.size());
 
-	if (remove_client(kq, client_sockfd) != 0) // NOTE: Do not do this with chunked requests
-		return -1;
+	remove_client(client_sockfd); // NOTE: Do not do this with chunked requests
+}
 
-	return 0;
+void EventQueue::remove_client(int client_sockfd) {
+	struct kevent kev;
+
+	EV_SET(&kev, client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	int ret = kevent(this->_kq, &kev, 1, NULL, 0, NULL);
+	if (ret == -1)
+		throw std::runtime_error("Error removing client");
+	if (kev.flags & EV_ERROR)
+		throw std::runtime_error("Event error: " + std::string(strerror(kev.data)));
+	close(client_sockfd);
 }

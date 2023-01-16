@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
 		std::cout << "Listening on port " << PORT << std::endl;
 
-		EventQueue keventQueue(serverSocket.get_sockfd());
+		EventQueue keventQueue(serverSocket);
 		keventQueue.add_event_listener(serverSocket.get_sockfd());
 		keventQueue.event_loop();
 		serverSocket.close();

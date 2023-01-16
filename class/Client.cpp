@@ -1,15 +1,12 @@
 #include "Client.hpp"
+#include <sstream>
 
-Client::Client(void) {
-	this->_client_address_len = sizeof(this->_client_address);
+Client::Client(int client_sockfd, sockaddr_in client_address, socklen_t client_address_len)
+	: _client_sockfd(client_sockfd), _client_address(client_address), _client_address_len(client_address_len)
+{
 }
 
-void Client::accept(int server_sockfd) {
-	this->_client_sockfd = ::accept(server_sockfd, (sockaddr*) &_client_address, &_client_address_len);
-	if (this->_client_sockfd <= 0)
-		throw std::runtime_error("Error accepting incoming connections on listening socket");
-}
-
+// TODO: should we also remove it from the map in the Socket class?
 void Client::close(void) {
 	::close(this->_client_sockfd);
 }

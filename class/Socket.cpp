@@ -26,13 +26,30 @@ void Socket::bind(void)
 void Socket::listen(int backlog)
 {
 	this->_backlog = backlog;
-	if (::listen(_sockfd, _backlog) < 0)
+	if (::listen(this->_sockfd, this->_backlog) < 0)
 		throw std::runtime_error("Error listening on socket");
+}
+
+Client &Socket::accept()
+{
+	sockaddr_in client_address;
+	socklen_t client_len = sizeof(client_address);
+	int client_sockfd = ::accept(this->_sockfd, (sockaddr*) &client_address, &client_len);
+	if (client_sockfd < 0)
+		throw std::runtime_error("Error accepting connection");
+	Client client(client_sockfd, client_address, client_len);
+	this->_clients[client_sockfd] = client;
+	return this->_clients.at(client_sockfd);
 }
 
 void Socket::close(void)
 {
 	::close(this->_sockfd);
+}
+
+Client &Socket::get_client(int client_sockfd)
+{
+	return this->_clients.at(client_sockfd);
 }
 
 int Socket::get_sockfd(void) const

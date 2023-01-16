@@ -9,10 +9,9 @@
 class Client
 {
 public:
-	Client();
-	void	accept(int server_sockfd);
-	int		get_sockfd(void) const;
-	void	close(void);
+	Client(int client_sockfd, sockaddr_in client_address, socklen_t client_address_len);
+	int			get_sockfd(void) const;
+	void		close(void);
 
 private:
 	int			_client_sockfd;

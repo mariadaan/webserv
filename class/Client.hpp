@@ -9,9 +9,11 @@
 class Client
 {
 public:
+	Client() {};
 	Client(int client_sockfd, sockaddr_in client_address, socklen_t client_address_len);
 	int			get_sockfd(void) const;
 	void		close(void);
+	std::string	get_ip(void) const;
 
 private:
 	int			_client_sockfd;

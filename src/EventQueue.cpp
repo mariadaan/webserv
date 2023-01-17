@@ -42,6 +42,7 @@ void EventQueue::event_loop(void) {
 void EventQueue::accept_client() {
 	try {
 		Client &client = this->_server.accept();
+		std::cout << "Accepted client: " << client.get_sockfd() << std::endl;
 		this->add_event_listener(client.get_sockfd());
 	}
 	catch(const std::exception& e) {

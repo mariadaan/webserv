@@ -1,5 +1,5 @@
 NAME = serv
-SRCS = main.cpp Socket.cpp EventQueue.cpp
+SRCS = main.cpp Socket.cpp EventQueue.cpp Client.cpp
 OBJS = $(SRCS:.cpp=.o)
 FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
 CC = c++

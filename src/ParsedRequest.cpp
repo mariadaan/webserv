@@ -60,12 +60,12 @@ ParsedRequest::ParsedRequest(std::string str) {
 	if (first_line_parts.size() != 3) {
 		throw std::runtime_error("Invalid first line");
 	}
-	this->method_string = first_line_parts[0];
-	this->method = ParsedRequest::parse_method(first_line_parts[0]);
+	this->method = ParsedRequest::_parse_method(first_line_parts[0]);
 	this->path = first_line_parts[1];
 	this->http_version = first_line_parts[2];
 	lines.erase(lines.begin());
-	this->headers = ParsedRequest::parse_headers(lines);
+	this->headers = ParsedRequest::_parse_headers(lines);
+	this->is_chunked = this->_is_chunked();
 }
 
 std::string const &ParsedRequest::get_header(std::string key) const {
@@ -94,7 +94,23 @@ std::string ParsedRequest::get_auth_scheme() const {
 	return auth_header.substr(0, found);
 }
 
-Method ParsedRequest::parse_method(std::string method_str) {
+bool ParsedRequest::_is_chunked(void) const {
+	if (this->headers.count("transfer-encoding") == 0)
+		return false;
+	std::string transfer_encoding = this->headers.at("transfer-encoding");
+	std::vector<std::string> encodings = util::split_string(transfer_encoding, ",");
+	for (decltype(encodings)::const_iterator it = encodings.cbegin(); it != encodings.cend(); ++it) {
+		std::string encoding = *it;
+		size_t start = encoding.find_first_not_of(' ');
+		if (start != std::string::npos)
+			encoding = encoding.substr(start);
+		if (encoding == "chunked")
+			return true;
+	}
+	return false;
+}
+
+Method ParsedRequest::_parse_method(std::string method_str) {
 	static std::map<std::string, Method> methods;
 	methods["GET"] = GET;
 	methods["POST"] = POST;
@@ -110,9 +126,9 @@ Method ParsedRequest::parse_method(std::string method_str) {
 	return methods[method_str];
 }
 
-std::map<std::string, std::string> ParsedRequest::parse_headers(std::vector<std::string> const lines) {
+std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std::string> const lines) {
 	std::map<std::string, std::string> headers;
-	std::string delimiter(": ");
+	std::string delimiter(": "); // TODO: check if this space is always correct
 	size_t delim_length = delimiter.length();
 	for (decltype(lines)::const_iterator it = lines.cbegin(); it != lines.cend(); ++it) {
 		std::string line = *it;
@@ -133,8 +149,12 @@ std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 	for (decltype(req.headers)::const_iterator it = req.headers.cbegin(); it != req.headers.cend(); ++it) {
 		os << "\t" << it->first << ": " << it->second << std::endl;
 	}
-	os << std::endl;
-	os << "Body: " << std::endl;
-	os << req.body << std::endl;
+	if (req.is_chunked)
+		os << "Body is chunked, not stored here" << std::endl;
+	else {
+		os << std::endl;
+		os << "Body: " << std::endl;
+		os << req.body << std::endl;
+	}
 	return os;
 }

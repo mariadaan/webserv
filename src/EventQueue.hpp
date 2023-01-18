@@ -1,8 +1,6 @@
 #ifndef EVENTQUEUE_HPP
  #define EVENTQUEUE_HPP
 
-#include "Socket.hpp"
-
 #include <sys/types.h>
 #include <sys/event.h>
 #include <iostream>
@@ -11,22 +9,21 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-
+class Server;
 class EventQueue
 {
 public:
-	EventQueue(Socket &server);
+	EventQueue(Server &server);
 
 	void	add_event_listener(int sockfd);
 	void	event_loop(void);
 
 	void	accept_client();
-	void	handle_client(Client &client);
-	void	remove_client(Client &client);
+	void	remove_event_listener(int sockfd);
 
 private:
 	int		_kq;
-	Socket	&_server;
+	Server	&_server;
 };
 
 

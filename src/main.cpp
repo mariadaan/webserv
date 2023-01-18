@@ -1,4 +1,4 @@
-#include "Socket.hpp"
+#include "Server.hpp"
 #include "EventQueue.hpp"
 
 #include <iostream>
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 		ss >> PORT;
 	}
 	try {
-		Socket serverSocket(PF_INET, SOCK_STREAM, 0);
+		Server serverSocket(PF_INET, SOCK_STREAM, 0);
 		serverSocket.set_address(PORT);
 		serverSocket.bind();
 		serverSocket.listen(BACKLOG);

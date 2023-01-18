@@ -1,9 +1,9 @@
 NAME = serv
-SRCS = main.cpp Socket.cpp EventQueue.cpp Client.cpp
+SRCS = main.cpp Server.cpp EventQueue.cpp Client.cpp
 OBJS = $(SRCS:.cpp=.o)
 FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
 CC = c++
-INCLUDES = Socket.hpp EventQueue.hpp
+INCLUDES = Server.hpp EventQueue.hpp Client.hpp
 
 all: $(NAME)
 

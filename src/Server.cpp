@@ -1,14 +1,14 @@
-#include "Socket.hpp"
+#include "Server.hpp"
 
-Socket::Socket(int domain, int socketType, int protocol)
+Server::Server(int domain, int socketType, int protocol)
 	: _domain(domain), _socket_type(socketType), _protocol(protocol)
 {
-	this->_sockfd = socket(_domain, _socket_type, _protocol);
-	if (this->_sockfd < 0)
+	this->_server_sockfd = socket(_domain, _socket_type, _protocol);
+	if (this->_server_sockfd < 0)
 		throw std::runtime_error("Error creating socket");
 }
 
-void Socket::set_address(int portnum)
+void Server::set_address(int portnum)
 {
 	this->_portnum = portnum;
 	std::memset(&_address, 0, sizeof(_address)); // pad the structure to the length of a struct sockaddr. set to zero
@@ -17,24 +17,24 @@ void Socket::set_address(int portnum)
 	_address.sin_port = htons(_portnum); // convert to network byte order
 }
 
-void Socket::bind(void)
+void Server::bind(void)
 {
-	if (::bind(_sockfd, (sockaddr*) &_address, sizeof(_address)) < 0)
+	if (::bind(this->_server_sockfd, (sockaddr*) &_address, sizeof(_address)) < 0)
 		throw std::runtime_error("Error binding socket");
 }
 
-void Socket::listen(int backlog)
+void Server::listen(int backlog)
 {
 	this->_backlog = backlog;
-	if (::listen(this->_sockfd, this->_backlog) < 0)
+	if (::listen(this->_server_sockfd, this->_backlog) < 0)
 		throw std::runtime_error("Error listening on socket");
 }
 
-Client &Socket::accept()
+Client &Server::accept()
 {
 	sockaddr_in client_address;
 	socklen_t client_len = sizeof(client_address);
-	int client_sockfd = ::accept(this->_sockfd, (sockaddr*) &client_address, &client_len);
+	int client_sockfd = ::accept(this->_server_sockfd, (sockaddr*) &client_address, &client_len);
 	if (client_sockfd < 0)
 		throw std::runtime_error("Error accepting connection");
 	Client client(client_sockfd, client_address, client_len);
@@ -42,17 +42,17 @@ Client &Socket::accept()
 	return this->_clients.at(client_sockfd);
 }
 
-void Socket::close(void)
+void Server::close(void)
 {
-	::close(this->_sockfd);
+	::close(this->_server_sockfd);
 }
 
-Client &Socket::get_client(int client_sockfd)
+Client &Server::get_client(int client_sockfd)
 {
 	return this->_clients.at(client_sockfd);
 }
 
-int Socket::get_sockfd(void) const
+int Server::get_sockfd(void) const
 {
-	return (this->_sockfd);
+	return (this->_server_sockfd);
 }

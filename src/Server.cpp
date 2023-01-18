@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Client.hpp"
 
 Server::Server(int domain, int socketType, int protocol)
 	: _domain(domain), _socket_type(socketType), _protocol(protocol)

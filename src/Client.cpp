@@ -1,4 +1,6 @@
 #include "Client.hpp"
+#include "EventQueue.hpp"
+#include "ParsedRequest.hpp"
 #include <sstream>
 
 Client::Client(int client_sockfd, sockaddr_in client_address, socklen_t client_address_len)
@@ -12,4 +14,52 @@ void Client::close(void) {
 
 int Client::get_sockfd(void) const {
 	return (this->_client_sockfd);
+}
+
+bool Client::is_parsed(void) const {
+	return (this->_request.is_set());
+}
+
+/* TODO: deze functie verbeteren, request doorsturen aan parser en evt aan CGI */
+void Client::handle_event(struct kevent &ev_rec, EventQueue &event_queue) {
+	if (ev_rec.filter == EVFILT_READ) {
+		if (ev_rec.flags & EV_EOF) {
+			std::cout << "Client disconnected: " << this->get_sockfd() << std::endl;
+			this->close();
+		}
+		else {
+			size_t bytes_available = ev_rec.data + 1;
+			char buffer[bytes_available];
+			int bytes_read = recv(this->get_sockfd(), buffer, bytes_available, 0);
+			std::string received(buffer, bytes_read);
+
+			if (this->is_parsed()) {
+				if (!this->_request.is_chunked)
+					throw std::logic_error("Received data while (non-chunked) request was already parsed");
+				std::cout << "Received chunked data:" << std::endl;
+				std::cout << received << std::endl;
+				// TODO: handle chunked data
+			}
+			else {
+				this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+
+				std::cout << "Received request:" << std::endl;
+				std::cout << this->_request << std::endl;
+
+				if (this->_request.is_chunked) {
+					std::cout << "Chunked request" << std::endl;
+					if (this->_request.headers.count("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
+						std::string response = "HTTP/1.1 100 Continue\r\n\r\n";
+						send(this->get_sockfd(), response.c_str(), response.size(), 0);
+					}
+				}
+				else {
+					std::cout << "Not chunked request" << std::endl;
+					// Send the response
+					std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
+					send(this->get_sockfd(), response.c_str(), response.size(), 0);
+				}
+			}
+		}
+	}
 }

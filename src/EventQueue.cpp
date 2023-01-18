@@ -1,7 +1,7 @@
 #include "EventQueue.hpp"
 #include "Client.hpp"
 
-EventQueue::EventQueue(Socket &server) : _server(server) {
+EventQueue::EventQueue(Server &server) : _server(server) {
 	this->_kq = kqueue();
 	if (_kq == -1)
 		throw std::runtime_error("Error creating kqueue");

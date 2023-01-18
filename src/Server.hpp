@@ -1,5 +1,5 @@
-#ifndef SOCKET_HPP
- #define SOCKET_HPP
+#ifndef SERVER_HPP
+ #define SERVER_HPP
 
 #include "Client.hpp"
 #include <map>
@@ -8,10 +8,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-class Socket
+class Server
 {
 public:
-	Socket(int domain, int socketType, int protocol);
+	Server(int domain, int socketType, int protocol);
 
 	void	set_address(int portnum);
 	void	bind(void);
@@ -19,11 +19,10 @@ public:
 	Client	&accept();
 	void	close(void);
 	Client	&get_client(int client_sockfd);
-
 	int		get_sockfd(void) const;
 
 private:
-	int						_sockfd;
+	int						_server_sockfd;
 	int						_domain;
 	int						_socket_type;
 	int						_protocol;

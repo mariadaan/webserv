@@ -1,5 +1,7 @@
 *
 !*/
+!root/**
+!testing/request_examples/**
 !*.[cht]pp
 !README.md
 !.gitignore

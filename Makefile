@@ -6,7 +6,7 @@
 #    By: mvan-wij <mvan-wij@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2023/01/12 14:40:00 by mvan-wij      #+#    #+#                  #
-#    Updated: 2023/01/18 12:40:19 by mvan-wij      ########   odam.nl          #
+#    Updated: 2023/01/18 17:16:52 by mdaan         ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -98,6 +98,9 @@ re: fclean all
 run: $(NAME)
 	@./$(NAME) $(ARGS)
 
-.PHONY: all debug clean fclean re run
+test:
+	@$(MAKE) -C testing exe
+
+.PHONY: all debug clean fclean re run test
 
 ################################################################################

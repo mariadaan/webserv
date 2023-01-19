@@ -4,7 +4,11 @@
 #include <cstring>
 
 CGI::CGI(ParsedRequest const& request, Client &client) : _client(client) {
-	(void)request;
+	this->_init_env(request, client);
+	this->_start();
+}
+
+void CGI::_init_env(ParsedRequest const& request, Client &client) {
 	this->_env["AUTH_TYPE"] = request.get_auth_scheme();
 	// this->_env["CONTENT_LENGTH"] = request.get_content_length(); // NOTE: if and only if request has a body
 	// this->_env["CONTENT_TYPE"] = request.get_content_type(); // // NOTE: if and only if request has a body
@@ -24,7 +28,7 @@ CGI::CGI(ParsedRequest const& request, Client &client) : _client(client) {
 	this->_env["SERVER_SOFTWARE"] = "Webserv/1.0";
 }
 
-std::vector<char *> CGI::get_envp() const {
+std::vector<char *> CGI::_get_envp() const {
 	std::vector<char *> envp;
 
 	for (decltype(this->_env)::const_iterator it = this->_env.begin(); it != this->_env.end(); ++it) {
@@ -39,7 +43,7 @@ std::vector<char *> CGI::get_envp() const {
 	return envp;
 }
 
-std::vector<char *> CGI::get_argv() const {
+std::vector<char *> CGI::_get_argv() const {
 	std::vector<std::string> argv;
 	argv.push_back("./cgi_test.py");
 
@@ -55,21 +59,33 @@ std::vector<char *> CGI::get_argv() const {
 	return converted_argv;
 }
 
-#include <sstream>
-void CGI::serve() {
-	pid_t cpid = ::fork();
-	if (cpid == -1) {
+void CGI::write(const void *buf, size_t count) {
+	::write(this->_pipe_fd[1], buf, count);
+}
+
+void CGI::_start() {
+	if (::pipe(this->_pipe_fd) == -1)
+		throw std::runtime_error("pipe() failed");
+
+	this->_pid = ::fork();
+	if (this->_pid == -1) {
 		throw std::runtime_error("fork() failed");
 	}
 
-	if (cpid == 0) {
+	if (this->_pid == 0) {
+		::close(this->_pipe_fd[1]);
+		if (::dup2(this->_pipe_fd[0], STDIN_FILENO) == -1)
+			throw std::runtime_error("dup2() failed");
 		if (::dup2(this->_client.get_sockfd(), STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		::execve("./cgi_test.py", this->get_argv().data(), this->get_envp().data());
+		::execve("./cgi_test.py", this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
-	else {
-		int status;
-		::waitpid(cpid, &status, 0); // NOTE: this hangs the entire process, thus no other clients can be served
-	}
+}
+
+void CGI::wait() {
+	::close(this->_pipe_fd[0]);
+	::close(this->_pipe_fd[1]);
+	int status;
+	::waitpid(this->_pid, &status, 0); // NOTE: this hangs the entire process, thus no other clients can be served
 }

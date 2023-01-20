@@ -66,6 +66,8 @@ ParsedRequest::ParsedRequest(std::string str) {
 	lines.erase(lines.begin());
 	this->headers = ParsedRequest::_parse_headers(lines);
 	this->is_chunked = this->_is_chunked();
+	if (this->is_chunked)
+		this->_parse_chunks();
 }
 
 bool ParsedRequest::_is_chunked(void) const {
@@ -115,6 +117,23 @@ std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std
 	return headers;
 }
 
+std::list<std::string>ParsedRequest::_parse_chunks(void) {
+	std::cout << "chunked body: ----" << this->body << "----" << std::endl;
+	// TODO: parse chunks
+	return this->chunks;
+}
+
+std::string ParsedRequest::get_body(void) const {
+	if (!this->is_chunked)
+		return this->body;
+
+	std::string concat_chunks;
+	for (decltype(chunks)::const_iterator it = chunks.cbegin(); it != chunks.cend(); ++it) {
+		concat_chunks += *it;
+	}
+	return concat_chunks;
+}
+
 std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 	os << "Method: " << req.method << std::endl;
 	os << "Path: " << req.path << std::endl;
@@ -123,12 +142,6 @@ std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 	for (decltype(req.headers)::const_iterator it = req.headers.cbegin(); it != req.headers.cend(); ++it) {
 		os << "\t" << it->first << ": " << it->second << std::endl;
 	}
-	if (req.is_chunked)
-		os << "Body is chunked, not stored here" << std::endl;
-	else {
-		os << std::endl;
-		os << "Body: " << std::endl;
-		os << req.body << std::endl;
-	}
+	os << "Body: " << req.get_body() << std::endl;
 	return os;
 }

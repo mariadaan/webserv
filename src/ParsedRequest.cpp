@@ -62,10 +62,36 @@ ParsedRequest::ParsedRequest(std::string str) {
 	}
 	this->method = ParsedRequest::_parse_method(first_line_parts[0]);
 	this->path = first_line_parts[1];
-	this->version = first_line_parts[2];
+	this->http_version = first_line_parts[2];
 	lines.erase(lines.begin());
 	this->headers = ParsedRequest::_parse_headers(lines);
 	this->is_chunked = this->_is_chunked();
+}
+
+std::string const &ParsedRequest::get_header(std::string key) const {
+	util::str_to_lower(key);
+	return this->headers.at(key);
+}
+
+std::string ParsedRequest::get_query_string() const {
+	std::string query;
+	size_t found = this->path.find("?");
+	if (found == std::string::npos) {
+		return "";
+	}
+	return this->path.substr(found + 1);
+}
+
+std::string ParsedRequest::get_auth_scheme() const {
+	if (this->headers.count("Authorization") == 0) {
+		return "";
+	}
+	std::string auth_header = this->headers.at("authorization");
+	size_t found = auth_header.find(' ');
+	if (found == std::string::npos) {
+		throw std::runtime_error("Invalid Authorization header");
+	}
+	return auth_header.substr(0, found);
 }
 
 bool ParsedRequest::_is_chunked(void) const {
@@ -118,7 +144,7 @@ std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std
 std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 	os << "Method: " << req.method << std::endl;
 	os << "Path: " << req.path << std::endl;
-	os << "Version: " << req.version << std::endl;
+	os << "Version: " << req.http_version << std::endl;
 	os << "Headers: " << std::endl;
 	for (decltype(req.headers)::const_iterator it = req.headers.cbegin(); it != req.headers.cend(); ++it) {
 		os << "\t" << it->first << ": " << it->second << std::endl;

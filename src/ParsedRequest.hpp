@@ -23,13 +23,17 @@ std::ostream &operator<<(std::ostream &os, const Method &req);
 class ParsedRequest {
 public:
 	Method method;
+	std::string method_string;
 	std::string path;
-	std::string version;
+	std::string http_version;
 	std::map<std::string, std::string> headers;
 	std::string body;
 	bool is_chunked;
 
 	ParsedRequest(std::string str);
+	std::string const &get_header(std::string key) const;
+	std::string get_query_string() const;
+	std::string get_auth_scheme() const;
 
 protected:
 	ParsedRequest() {};

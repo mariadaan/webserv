@@ -20,6 +20,16 @@ bool Client::is_parsed(void) const {
 	return (this->_request.is_set());
 }
 
+std::string Client::get_ip(void) const {
+	std::stringstream ss;
+	uint32_t s_addr = ntohl(this->_client_address.sin_addr.s_addr);
+	ss	<< ((s_addr >> 24) & 0xFF) << "."
+		<< ((s_addr >> 16) & 0xFF) << "."
+		<< ((s_addr >>  8) & 0xFF) << "."
+		<< ( s_addr        & 0xFF);
+	return (ss.str());
+}
+
 /* TODO: deze functie verbeteren, request doorsturen aan parser en evt aan CGI */
 void Client::handle_event(struct kevent &ev_rec, EventQueue &event_queue) {
 	if (ev_rec.filter == EVFILT_READ) {

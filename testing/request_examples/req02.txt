@@ -1,0 +1,11 @@
+POST /upload HTTP/1.1
+Host: www.example.com
+User-Agent: MyBrowser/1.0
+Accept: text/html
+Transfer-Encoding: chunked
+
+5
+hello
+7
+ world!
+0

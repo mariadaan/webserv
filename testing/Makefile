@@ -34,4 +34,4 @@ re: clean all
 exe: all
 	./test
 
-# $(brew --prefix criterion)/include
+.PHONY: all clean re exe

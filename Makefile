@@ -6,7 +6,7 @@
 #    By: mvan-wij <mvan-wij@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2023/01/12 14:40:00 by mvan-wij      #+#    #+#                  #
-#    Updated: 2023/01/18 17:16:52 by mdaan         ########   odam.nl          #
+#    Updated: 2023/01/25 14:15:13 by mdaan         ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -100,6 +100,9 @@ run: $(NAME)
 
 test:
 	@$(MAKE) -C testing exe
+
+cleantest:
+	@$(MAKE) -C testing clean
 
 .PHONY: all debug clean fclean re run test
 

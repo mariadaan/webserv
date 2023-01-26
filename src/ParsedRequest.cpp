@@ -1,32 +1,8 @@
 #include "ParsedRequest.hpp"
+#include "util.hpp"
+#include <sstream>
 #include <algorithm>
 #include <cctype>
-
-namespace util {
-	static std::vector<std::string> split_string(std::string str, std::string delim) {
-		std::vector<std::string> result;
-
-		size_t pos = 0;
-		while (true) {
-			size_t found = str.find(delim, pos);
-
-			if (found == std::string::npos) {
-				result.push_back(str.substr(pos));
-				return result;
-			}
-			result.push_back(str.substr(pos, found - pos));
-			pos = found + delim.length();
-		}
-	}
-
-	static unsigned char char_to_lower(char c) {
-		return std::tolower(c);
-	}
-
-	static void str_to_lower(std::string &str) {
-		std::transform(str.begin(), str.end(), str.begin(), &char_to_lower);
-	}
-}
 
 std::ostream &operator<<(std::ostream &os, const Method &method) {
 	static std::map<Method, std::string> methods;
@@ -68,6 +44,11 @@ ParsedRequest::ParsedRequest(std::string str) {
 	this->is_chunked = this->_is_chunked();
 }
 
+bool ParsedRequest::has_header(std::string key) const {
+	util::str_to_lower(key);
+	return (this->headers.count(key) > 0);
+}
+
 std::string const &ParsedRequest::get_header(std::string key) const {
 	util::str_to_lower(key);
 	return this->headers.at(key);
@@ -92,6 +73,20 @@ std::string ParsedRequest::get_auth_scheme() const {
 		throw std::runtime_error("Invalid Authorization header");
 	}
 	return auth_header.substr(0, found);
+}
+
+size_t ParsedRequest::get_content_length() const {
+	if (this->headers.count("content-length") == 0) {
+		throw std::runtime_error("No content-length header found");
+	}
+	std::string content_length_str = this->headers.at("content-length");
+	std::stringstream ss(content_length_str);
+	size_t content_length;
+	ss >> content_length;
+	if (ss.fail() || ss.bad() || !ss.eof()) {
+		throw std::runtime_error("Invalid content-length header");
+	}
+	return content_length;
 }
 
 bool ParsedRequest::_is_chunked(void) const {

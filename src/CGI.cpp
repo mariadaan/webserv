@@ -1,11 +1,12 @@
 #include "CGI.hpp"
+#include "Client.hpp"
 #include <unistd.h>
 #include <vector>
 #include <cstring>
 
-CGI::CGI(ParsedRequest const& request, Client &client) : _client(client) {
+CGI::CGI(ParsedRequest const& request, Client &client) {
 	this->_init_env(request, client);
-	this->_start();
+	this->_start(client);
 }
 
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
@@ -45,7 +46,7 @@ std::vector<char *> CGI::_get_envp() const {
 
 std::vector<char *> CGI::_get_argv() const {
 	std::vector<std::string> argv;
-	argv.push_back("./cgi_test.py");
+	argv.push_back("./root/usr/lib/cgi-bin/cgi_test.py");
 
 	std::vector<char *> converted_argv;
 	for (decltype(argv)::const_iterator it = argv.begin(); it != argv.end(); ++it) {
@@ -63,7 +64,7 @@ void CGI::write(const void *buf, size_t count) {
 	::write(this->_pipe_fd[1], buf, count);
 }
 
-void CGI::_start() {
+void CGI::_start(Client &client) {
 	if (::pipe(this->_pipe_fd) == -1)
 		throw std::runtime_error("pipe() failed");
 
@@ -76,9 +77,9 @@ void CGI::_start() {
 		::close(this->_pipe_fd[1]);
 		if (::dup2(this->_pipe_fd[0], STDIN_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		if (::dup2(this->_client.get_sockfd(), STDOUT_FILENO) == -1)
+		if (::dup2(client.get_sockfd(), STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		::execve("./cgi_test.py", this->_get_argv().data(), this->_get_envp().data());
+		::execve("./root/usr/lib/cgi-bin/cgi_test.py", this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
 }

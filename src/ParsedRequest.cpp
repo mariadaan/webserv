@@ -1,4 +1,5 @@
 #include "ParsedRequest.hpp"
+#include "Logger.hpp"
 #include "util.hpp"
 #include <sstream>
 #include <algorithm>
@@ -20,28 +21,8 @@ std::ostream &operator<<(std::ostream &os, const Method &method) {
 	return os;
 }
 
-ParsedRequest::ParsedRequest(std::string str) {
-	std::string metadata;
-	size_t found = str.find("\r\n\r\n");
-	if (found == std::string::npos) {
-		this->body = "";
-		metadata = str;
-	}
-	else {
-		this->body = str.substr(found + 4);
-		metadata = str.substr(0, found);
-	}
-	std::vector<std::string> lines = util::split_string(metadata, "\r\n");
-	std::vector<std::string> first_line_parts = util::split_string(lines[0], " ");
-	if (first_line_parts.size() != 3) {
-		throw std::runtime_error("Invalid first line");
-	}
-	this->method = ParsedRequest::_parse_method(first_line_parts[0]);
-	this->path = first_line_parts[1];
-	this->http_version = first_line_parts[2];
-	lines.erase(lines.begin());
-	this->headers = ParsedRequest::_parse_headers(lines);
-	this->is_chunked = this->_is_chunked();
+ParsedRequest::ParsedRequest(std::string str) : _headers_done(false) {
+	this->parse_part(str);
 }
 
 bool ParsedRequest::has_header(std::string key) const {
@@ -89,6 +70,30 @@ size_t ParsedRequest::get_content_length() const {
 	return content_length;
 }
 
+bool ParsedRequest::headers_finished() const {
+	return this->_headers_done;
+}
+
+void ParsedRequest::parse_part(std::string part) {
+	std::string header_delim("\r\n\r\n");
+	size_t a = part.find(header_delim);
+	this->_metadata += part.substr(0, a);
+	if (part.size() < header_delim.size()) {
+		size_t b = this->_metadata.find(header_delim, this->_metadata.size() - (header_delim.size() + part.size() - 1));
+		if (b != std::string::npos) {
+			this->body = this->_metadata.substr(b + header_delim.size());
+			this->_metadata = this->_metadata.substr(0, b);
+			this->_headers_done = true;
+			this->_parse_metadata();
+		}
+	}
+	else if (a != std::string::npos) {
+		this->body = part.substr(a + header_delim.size()); // TODO: check if there is more to do
+		this->_headers_done = true;
+		this->_parse_metadata();
+	}
+}
+
 bool ParsedRequest::_is_chunked(void) const {
 	if (this->headers.count("transfer-encoding") == 0)
 		return false;
@@ -103,6 +108,20 @@ bool ParsedRequest::_is_chunked(void) const {
 			return true;
 	}
 	return false;
+}
+
+void ParsedRequest::_parse_metadata() {
+	std::vector<std::string> lines = util::split_string(this->_metadata, "\r\n");
+	std::vector<std::string> first_line_parts = util::split_string(lines[0], " ");
+	if (first_line_parts.size() != 3) {
+		throw std::runtime_error("Invalid first line");
+	}
+	this->method = ParsedRequest::_parse_method(first_line_parts[0]);
+	this->path = first_line_parts[1];
+	this->http_version = first_line_parts[2];
+	lines.erase(lines.begin());
+	this->headers = ParsedRequest::_parse_headers(lines);
+	this->is_chunked = this->_is_chunked();
 }
 
 Method ParsedRequest::_parse_method(std::string method_str) {
@@ -128,6 +147,9 @@ std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std
 	for (decltype(lines)::const_iterator it = lines.cbegin(); it != lines.cend(); ++it) {
 		std::string line = *it;
 		size_t delim_pos = line.find(delimiter);
+		if (delim_pos == std::string::npos) {
+			throw std::runtime_error("header delim not found");
+		}
 		std::string key = line.substr(0, delim_pos);
 		util::str_to_lower(key);
 		std::string value = line.substr(delim_pos + delim_length);

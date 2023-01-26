@@ -1,6 +1,7 @@
 #include "EventQueue.hpp"
 #include "Server.hpp"
 #include "Client.hpp"
+#include "Logger.hpp"
 
 EventQueue::EventQueue(Server &server) : _server(server) {
 	this->_kq = kqueue();
@@ -36,18 +37,21 @@ void EventQueue::event_loop(void) {
 		if (ev_rec.ident == (uintptr_t)this->_server.get_sockfd())
 			this->accept_client();
 		else
-			this->_server.get_client(ev_rec.ident).handle_event(ev_rec, *this);
+		{
+			logger << Logger::info << "Got event on client: " << ev_rec.ident << std::endl;
+			this->_server.get_client(ev_rec.ident).handle_event(ev_rec);
+		}
 	}
 }
 
 void EventQueue::accept_client() {
 	try {
 		Client &client = this->_server.accept();
-		std::cout << "Accepted client: " << client.get_sockfd() << std::endl;
+		logger << Logger::info << "Accepted client: " << client.get_sockfd() << std::endl;
 		this->add_event_listener(client.get_sockfd());
 	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << '\n';
+	catch (const std::exception& e) {
+		logger << Logger::error << e.what() << '\n';
 	}
 }
 

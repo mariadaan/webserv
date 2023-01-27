@@ -5,7 +5,7 @@
 
 EventQueue::EventQueue(Server &server) : _server(server) {
 	this->_kq = kqueue();
-	if (_kq == -1)
+	if (this->_kq == -1)
 		throw std::runtime_error("Error creating kqueue");
 }
 
@@ -16,7 +16,7 @@ void EventQueue::add_event_listener(int sockfd) {
 	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	int ret = ::kevent(this->_kq, &kev, 1, NULL, 0, NULL);
 	if (ret == -1) {
-		::close(sockfd); // what happens when you try to close an fd that was never opened?
+		::close(sockfd);
 		throw std::runtime_error("Error adding event listener");
 	}
 	if (kev.flags & EV_ERROR) {
@@ -54,6 +54,7 @@ void EventQueue::accept_client() {
 	}
 }
 
+// We don't use this function now. Delete if not needed
 void EventQueue::remove_event_listener(int sockfd) {
 	struct kevent kev;
 

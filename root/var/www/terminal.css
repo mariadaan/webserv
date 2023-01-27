@@ -1,0 +1,30 @@
+body {
+    font-family: monospace;
+    background-color: #000;
+    color: #fff;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.terminal {
+    width: 80%;
+    margin: auto;
+    padding: 20px;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    overflow: auto;
+}
+
+.terminal::before {
+    content: "> WEBSERV";
+    color: #00ff00;
+}
+
+.terminal::after {
+    content: " ";
+    display: block;
+    height: 20px;
+}

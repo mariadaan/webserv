@@ -37,6 +37,7 @@ private:
 	void		_handle_chunks(std::string const &received);
 	void		_handle_non_chunk(std::string const &received);
 	void		_finish_request();
+	void		_file_response();
 
 	void		_wait_for_cgi();
 

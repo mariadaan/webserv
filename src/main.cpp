@@ -14,7 +14,6 @@ const int BACKLOG = 5;
 Logger logger;
 
 int main(int argc, char *argv[]) {
-
 	if (argc > 1) {
 		std::stringstream ss;
 		std::string s(argv[1]);

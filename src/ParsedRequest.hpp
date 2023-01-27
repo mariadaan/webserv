@@ -36,6 +36,8 @@ public:
 	std::string get_query_string() const;
 	std::string get_auth_scheme() const;
 	size_t get_content_length() const;
+	bool headers_finished() const;
+	void parse_part(std::string part);
 
 protected:
 	ParsedRequest() {};
@@ -44,6 +46,9 @@ private:
 	static Method _parse_method(std::string method_str);
 	static std::map<std::string, std::string> _parse_headers(std::vector<std::string> lines);
 	bool _is_chunked(void) const;
+	bool _headers_done;
+	std::string _metadata;
+	void _parse_metadata();
 };
 
 std::ostream &operator<<(std::ostream &os, const ParsedRequest &req);

@@ -30,7 +30,7 @@ std::string Client::get_ip(void) const {
 }
 
 bool Client::_is_parsed(void) const {
-	return (this->_request.is_set());
+	return (this->_request.is_set() && this->_request.headers_finished());
 }
 
 bool Client::_go_to_cgi(void) const {
@@ -38,7 +38,16 @@ bool Client::_go_to_cgi(void) const {
 }
 
 void Client::_handle_request(std::string const &received) {
-	this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+	if (!this->_request.is_set()) {
+		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+	}
+	else {
+		this->_request.parse_part(received);
+	}
+
+	if (!this->_is_parsed()) {
+		return;
+	}
 
 	logger << Logger::info << "Received request:" << std::endl;
 	logger << Logger::info << this->_request << std::endl;
@@ -108,10 +117,10 @@ void Client::_finish_request() {
 
 void Client::_handle_chunks(std::string const &received) {
 	logger << Logger::info << "Got chunk" << std::endl;
-	Chunks chunks(received);
-	for (Chunks::const_iterator chunk_it = chunks.get_chunks().begin(); chunk_it < chunks.get_chunks().end(); chunk_it++) {
+	std::vector<Chunk> chunks = get_chunks(received);
+	for (std::vector<Chunks>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
-			this->_finish_request();
+			logger << Logger::info << "Got last chunk" << std::endl;
 			return ;
 		}
 
@@ -144,7 +153,7 @@ void Client::handle_event(struct kevent &ev_rec) {
 			this->close();
 		}
 		else {
-			size_t bytes_available = ev_rec.data + 1;
+			size_t bytes_available = ev_rec.data;
 			char *buffer = new char[bytes_available];
 			int bytes_read = recv(this->get_sockfd(), buffer, bytes_available, 0);
 			std::string received(buffer, bytes_read);

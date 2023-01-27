@@ -14,6 +14,8 @@ private:
 	size_t		_size;
 };
 
+std::vector<Chunk> get_chunks(std::string data); // NOTE: new function
+
 class Chunks {
 public:
 	Chunks(std::string data);

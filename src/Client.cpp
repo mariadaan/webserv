@@ -118,7 +118,7 @@ void Client::_finish_request() {
 void Client::_handle_chunks(std::string const &received) {
 	logger << Logger::info << "Got chunk" << std::endl;
 	std::vector<Chunk> chunks = get_chunks(received);
-	for (std::vector<Chunks>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
+	for (std::vector<Chunk>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;
 			return ;

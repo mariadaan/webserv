@@ -58,7 +58,6 @@ void Client::_file_response(void) {
 	}
 	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
 	logger << Logger::info << "Response sent" << std::endl;
-	this->close(); // dit is niet de bedoeling maar weet niet hoe ik dit moet fixen
 }
 
 void Client::_handle_request(std::string const &received) {
@@ -80,7 +79,7 @@ void Client::_handle_request(std::string const &received) {
 		this->_cgi = Optional<CGI>(CGI(this->_request, *this));
 	}
 	else {
-		this->_file_response();
+		// TODO: maybe do something for non-cgi requests
 	}
 
 	if (this->_request.has_header("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
@@ -113,7 +112,6 @@ void Client::_wait_for_cgi() {
 	std::string response = "HTTP/1.1 200 OK\r\n"; // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
 	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
 	this->_cgi.wait(); // currently also closes the write end of the pipe
-	::close(this->get_sockfd());
 }
 
 std::string &Client::_get_body(void) {
@@ -131,12 +129,10 @@ void Client::_finish_request() {
 		}
 		this->_wait_for_cgi();
 	}
-	// else {
-	// 	std::string &body = this->_get_body();
-	// 	// TODO: handle non-cgi request
-	// 	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nHello, world!\n";
-	// 	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
-	// }
+	else {
+		this->_file_response();
+	}
+	this->close();
 }
 
 void Client::_handle_chunks(std::string const &received) {
@@ -145,6 +141,7 @@ void Client::_handle_chunks(std::string const &received) {
 	for (std::vector<Chunk>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;
+			this->_finish_request();
 			return ;
 		}
 

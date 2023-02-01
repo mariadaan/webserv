@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "EventQueue.hpp"
 #include "ParsedRequest.hpp"
+#include "FileResponse.hpp"
 #include "Chunk.hpp"
 #include "util.hpp"
 #include "Logger.hpp"
@@ -39,28 +40,9 @@ bool Client::_go_to_cgi(void) const {
 
 // when the request does not include a cgi
 void Client::_file_response(void) {
-	std::string page_content;
-	std::string response;
-	std::string pages_dir = "./root/var/www";
-	std::string filename = pages_dir + this->_request.path;
-
-	if (util::can_open_file(filename)) {
-		page_content = util::file_to_str(filename);
-		if (this->_request.path == "/"){ // default page
-			page_content = util::file_to_str(pages_dir + "/index.html");
-			response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + page_content;
-		}
-		else { // requested page
-			std::string file_extension = this->_request.path.substr(this->_request.path.find_last_of(".") + 1);
-			util::print(file_extension);
-			response = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n" + page_content;
-		}
-	}
-	else { // requested page does not exist
-		page_content = util::file_to_str(pages_dir + "/notfound.html");
-		response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n" + page_content;
-	}
-	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
+	FileResponse file_response(this->_request.path);
+	file_response.generate_response();
+	::send(this->get_sockfd(), file_response.get_response().c_str(), file_response.get_response().size(), 0);
 	logger << Logger::info << "Response sent" << std::endl;
 }
 

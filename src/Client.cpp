@@ -42,19 +42,23 @@ void Client::_file_response(void) {
 	std::string page_content;
 	std::string response;
 	std::string pages_dir = "./root/var/www";
+	std::string filename = pages_dir + this->_request.path;
 
-	page_content = util::file_to_str(pages_dir + this->_request.path);
-	if (this->_request.path == "/"){ // default page
-		page_content = util::file_to_str(pages_dir + "/index.html");
-		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + page_content;
+	if (util::can_open_file(filename)) {
+		page_content = util::file_to_str(filename);
+		if (this->_request.path == "/"){ // default page
+			page_content = util::file_to_str(pages_dir + "/index.html");
+			response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + page_content;
+		}
+		else { // requested page
+			std::string file_extension = this->_request.path.substr(this->_request.path.find_last_of(".") + 1);
+			util::print(file_extension);
+			response = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n" + page_content;
+		}
 	}
-	else if (page_content.empty()) { // requested page does not exist
+	else { // requested page does not exist
 		page_content = util::file_to_str(pages_dir + "/notfound.html");
 		response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n" + page_content;
-	}
-	else { // requested page does exist
-		std::string file_extension = this->_request.path.substr(this->_request.path.find_last_of(".") + 1);
-		response = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n" + page_content;
 	}
 	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
 	logger << Logger::info << "Response sent" << std::endl;

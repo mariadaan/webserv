@@ -1,0 +1,31 @@
+{
+	"server": {
+	  "name": "My Web Server",
+	  "os": "Linux",
+	  "location": "Amsterdam, Netherlands",
+	  "ip_address": "192.168.1.100"
+	},
+	"components": [
+	  {
+		"name": "Apache HTTP Server",
+		"version": "2.4.41",
+		"status": "running"
+	  },
+	  {
+		"name": "MySQL Database",
+		"version": "8.0.22",
+		"status": "running"
+	  },
+	  {
+		"name": "PHP",
+		"version": "7.4.13",
+		"status": "running"
+	  },
+	  {
+		"name": "Node.js",
+		"version": "15.10.0",
+		"status": "running"
+	  }
+	]
+  }
+  

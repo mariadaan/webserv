@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 		serverSocket.bind();
 		serverSocket.listen(BACKLOG);
 
-		logger << Logger::info << "Listening on port " << PORT << std::endl;
+		logger << Logger::info << "Listening on port " << PORT << ": http://localhost:" << PORT << std::endl;
 
 		EventQueue keventQueue(serverSocket);
 		keventQueue.add_event_listener(serverSocket.get_sockfd());

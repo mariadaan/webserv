@@ -11,6 +11,7 @@ namespace util {
 	std::vector<std::string> split_string(std::string const &str, std::string const &delim);
 	unsigned char char_to_lower(char c);
 	void str_to_lower(std::string &str);
+	bool can_open_file(const std::string& filename);
 	std::string file_to_str(std::string const &filename);
 
 	// ja het is een beetje lelijk maar je moet wat zonder github copilot he

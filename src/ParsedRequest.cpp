@@ -44,6 +44,17 @@ std::string ParsedRequest::get_query_string() const {
 	return this->path.substr(found + 1);
 }
 
+std::string ParsedRequest::get_script_name() const {
+	std::string script_name;
+	size_t found = this->path.find("/cgi-bin/");
+	if (found == std::string::npos) {
+		return "";
+	}
+	script_name = this->path.substr(found);
+	script_name = script_name.substr(0, script_name.find(".py") + 3);
+	return script_name;
+}
+
 std::string ParsedRequest::get_auth_scheme() const {
 	if (this->headers.count("Authorization") == 0) {
 		return "";
@@ -146,6 +157,8 @@ std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std
 	size_t delim_length = delimiter.length();
 	for (decltype(lines)::const_iterator it = lines.cbegin(); it != lines.cend(); ++it) {
 		std::string line = *it;
+		if (line == "\r\n\r\n" || line.empty())
+			return headers;
 		size_t delim_pos = line.find(delimiter);
 		if (delim_pos == std::string::npos) {
 			throw std::runtime_error("header delim not found");
@@ -170,8 +183,7 @@ std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 		os << "Body is chunked, not stored here" << std::endl;
 	else {
 		os << std::endl;
-		os << "Body: " << std::endl;
-		os << req.body << std::endl;
+		os << "Body: -----|" << req.body << "|-----" << std::endl;
 	}
 	return os;
 }

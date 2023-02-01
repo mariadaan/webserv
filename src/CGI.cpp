@@ -22,7 +22,7 @@ void CGI::_init_env(ParsedRequest const& request, Client &client) {
 	this->_env["REMOTE_IDENT"] = ""; // NOTE: does not need to be implemented
 	// this->_env["REMOTE_USER"] = request.get_remote_user(); //
 	this->_env["REQUEST_METHOD"] = request.method_string;
-	// this->_env["SCRIPT_NAME"] = ???;
+	this->_env["SCRIPT_NAME"] = request.get_script_name();
 	// this->_env["SERVER_NAME"] = config.get_server_name();
 	// this->_env["SERVER_PORT"] = config.get_server_port();
 	this->_env["SERVER_PROTOCOL"] = request.http_version;

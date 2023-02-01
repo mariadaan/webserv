@@ -37,6 +37,29 @@ bool Client::_go_to_cgi(void) const {
 	return (this->_cgi.is_set());
 }
 
+// when the request does not include a cgi
+void Client::_file_response(void) {
+	std::string page_content;
+	std::string response;
+	std::string pages_dir = "./root/var/www";
+
+	page_content = util::file_to_str(pages_dir + this->_request.path);
+	if (this->_request.path == "/"){ // default page
+		page_content = util::file_to_str(pages_dir + "/index.html");
+		response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + page_content;
+	}
+	else if (page_content.empty()) { // requested page does not exist
+		page_content = util::file_to_str(pages_dir + "/notfound.html");
+		response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n" + page_content;
+	}
+	else { // requested page does exist
+		std::string file_extension = this->_request.path.substr(this->_request.path.find_last_of(".") + 1);
+		response = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n" + page_content;
+	}
+	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
+	logger << Logger::info << "Response sent" << std::endl;
+}
+
 void Client::_handle_request(std::string const &received) {
 	if (!this->_request.is_set()) {
 		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
@@ -52,12 +75,11 @@ void Client::_handle_request(std::string const &received) {
 	logger << Logger::info << "Received request:" << std::endl;
 	logger << Logger::info << this->_request << std::endl;
 
-	bool should_go_to_gci = true;
-	if (should_go_to_gci) {
+	if (!this->_request.get_script_name().empty()) {
 		this->_cgi = Optional<CGI>(CGI(this->_request, *this));
 	}
 	else {
-		// TODO: handle non-chunked non-CGI requests
+		// TODO: maybe do something for non-cgi requests
 	}
 
 	if (this->_request.has_header("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
@@ -90,7 +112,6 @@ void Client::_wait_for_cgi() {
 	std::string response = "HTTP/1.1 200 OK\r\n"; // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
 	::send(this->get_sockfd(), response.c_str(), response.size(), 0);
 	this->_cgi.wait(); // currently also closes the write end of the pipe
-	::close(this->get_sockfd());
 }
 
 std::string &Client::_get_body(void) {
@@ -102,17 +123,16 @@ std::string &Client::_get_body(void) {
 
 void Client::_finish_request() {
 	if (this->_go_to_cgi()) {
+		logger << Logger::warn << "Going to CGI" << std::endl;
 		if (!this->_request.is_chunked) {
 			this->_cgi.write(this->_request.body.c_str(), this->_request.body.size());
 		}
 		this->_wait_for_cgi();
 	}
 	else {
-		std::string &body = this->_get_body();
-		// TODO: handle non-cgi request
-		std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nHello, world!\n";
-		::send(this->get_sockfd(), response.c_str(), response.size(), 0);
+		this->_file_response();
 	}
+	this->close();
 }
 
 void Client::_handle_chunks(std::string const &received) {
@@ -121,6 +141,7 @@ void Client::_handle_chunks(std::string const &received) {
 	for (std::vector<Chunk>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;
+			this->_finish_request();
 			return ;
 		}
 

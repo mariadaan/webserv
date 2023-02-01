@@ -34,6 +34,7 @@ public:
 	std::string const &get_header(std::string key) const;
 	bool has_header(std::string key) const;
 	std::string get_query_string() const;
+	std::string get_script_name() const;
 	std::string get_auth_scheme() const;
 	size_t get_content_length() const;
 	bool headers_finished() const;

@@ -1,12 +1,14 @@
 #include "Server.hpp"
 #include "EventQueue.hpp"
 #include "Logger.hpp"
+#include "configParser.hpp"
 
 #include <iostream>
 #include <string>
 #include <cstring>
 #include <unistd.h>
 #include <sstream>
+
 
 int PORT = 8080;
 const int BACKLOG = 5;
@@ -20,6 +22,7 @@ int main(int argc, char *argv[]) {
 		ss << s;
 		ss >> PORT;
 	}
+	std::vector<Config>	config_vector = parse_config(argv[1]);
 	logger << Logger::info << "Starting server on port " << PORT << std::endl;
 	try {
 		Server serverSocket(PF_INET, SOCK_STREAM, 0);

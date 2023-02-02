@@ -2,16 +2,16 @@
 
 // For each server found in the server vector the Config constructor is called
 // The constructor sets all the correct values and then the Config object is added to the Config vector
-std::vector<Config>	setConfigVector(std::vector<std::vector<std::string> > &serverVector)
+std::vector<Config>	set_config_vector(std::vector<std::vector<std::string> > &server_vector)
 {
-	std::vector<Config>	configVector;
+	std::vector<Config>	config_vector;
 
-	for (size_t i = 0; i < serverVector.size(); i++) //ITERATOR
+	for (size_t i = 0; i < server_vector.size(); i++) //ITERATOR
 	{
-		Config	conf(serverVector[i]);
-		configVector.push_back(conf);
+		Config	conf(server_vector[i]);
+		config_vector.push_back(conf);
 	}
-	return (configVector);
+	return (config_vector);
 }
 
 
@@ -20,81 +20,81 @@ std::vector<Config>	setConfigVector(std::vector<std::vector<std::string> > &serv
 //Linecount is a static variable that keeps track of the last line that is added to a server vector
 //Servercount is a static variable that keeps track of the number of server blocks encountered
 //When no server is found: if server count is also 0 an error is thrown. Else a empty vector is returned
-std::vector<std::string>	findServerBlock(const std::vector<std::string> &vec)
+std::vector<std::string>	find_server_block(const std::vector<std::string> &vec)
 {
-	static size_t				lineCount = 0;
-	static size_t				serverCount = 0;
-	std::vector<std::string>	serverBlock;
+	static size_t				line_count = 0;
+	static size_t				server_count = 0;
+	std::vector<std::string>	server_block;
 	size_t						begin;
 	size_t						end;
 	int							found = 0; 
 
-	for (; lineCount < vec.size(); lineCount++)
+	for (; line_count < vec.size(); line_count++)
 	{
-		if (vec[lineCount].find("server {") != std::string::npos)
+		if (vec[line_count].find("server {") != std::string::npos)
 		{
-			begin = lineCount;
-			end = findClosingBracket(vec, begin);
-			lineCount = end + 1;
-			serverCount++;
+			begin = line_count;
+			end = find_closing_bracket(vec, begin);
+			line_count = end + 1;
+			server_count++;
 			found = 1; 
 			break ;
 		}
 	}
-	if (found == 0 && serverCount == 0){
-		std::cerr << "No server block found in the provided file" << std::endl; //throw
-		exit (1);
+	if (found == 0 && server_count == 0){
+		std::cerr << "No server block found in the provided file" << std::endl;
+		exit (EXIT_FAILURE);
 	}
 	if (found == 0)
 		return (std::vector<std::string>());
 	for (size_t line = begin; line <= end; line++)
-		serverBlock.push_back(vec[line]);
-	return (serverBlock);
+		server_block.push_back(vec[line]);
+	return (server_block);
 }
 
 
 //Creates and returnes a vector of string vectors: vector< vector<string> >
 //Where each vector<string> is the body of a server block in the config file
-std::vector<std::vector<std::string> >	createServerVector(const std::vector<std::string> &file)
+std::vector<std::vector<std::string> >	create_server_vector(const std::vector<std::string> &file)
 {
-	std::vector<std::vector<std::string> >	serverVector;
-	std::vector<std::string>				serverBlock;
+	std::vector<std::vector<std::string> >	server_vector;
+	std::vector<std::string>				server_block;
 
-	serverBlock = findServerBlock(file);
-	while (!serverBlock.empty())
+	server_block = find_server_block(file);
+	while (!server_block.empty())
 	{
-		serverVector.push_back(serverBlock);
-		serverBlock = findServerBlock(file);
+		server_vector.push_back(server_block);
+		server_block = find_server_block(file);
 	}
-	if (serverVector.empty()){
-		std::cerr << "No server block found in the provided file" << std::endl; //overbodig wsl en throw
-		exit(1);
+	if (server_vector.empty()){
+		std::cerr << "No server block found in the provided file" << std::endl;
+		exit(EXIT_FAILURE);
 	}
-	return (serverVector);
+	return (server_vector);
 }
 
 
 //Puts all the lines from the config file as strings in a vector<string>
 //When a '#' or ';' character is found the rest of the line is seen as a comment, so the line gets truncated
 //Empty lines are skipped
-const std::vector<std::string>	getFileVector(const std::string &fileName)
+const std::vector<std::string>	get_file_vector(const std::string &file_name)
 {
-	std::ifstream	configFile(fileName);
-	if (!configFile) {
-		std::cerr << "Cannot open file: " << fileName << std::endl; //hier throw gaan gebruiken
-		exit(1);
+	std::ifstream	config_file(file_name);
+	if (!config_file) {
+		std::cerr << "Cannot open file: " << file_name << std::endl;
+		exit(EXIT_FAILURE);
 	}
-	std::vector<std::string>	confVector;
+	std::vector<std::string>	conf_vector;
 	std::string	line;
-	while (getline(configFile, line))
+	while (getline(config_file, line))
 	{
 		if (line.empty())
 			continue;
 		if (line.at(0) == '#')
 			continue;
-		line = truncateString(line, '#');
-		line = truncateString(line, ';');
-		confVector.push_back(line);
+		line = truncate_string(line, '#');
+		line = truncate_string(line, ';');
+		conf_vector.push_back(line);
 	}
-	return (confVector);
+	return (conf_vector);
 }

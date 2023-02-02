@@ -1,7 +1,7 @@
 #include "../configParser.hpp"
 
 //Checks if the word found is one of the keywords
-size_t	determineIfKeyword(const std::string &word)
+size_t	determine_if_keyword(const std::string &word)
 {
 	if (word == "listen")
 		return (LISTEN);
@@ -23,20 +23,20 @@ size_t	determineIfKeyword(const std::string &word)
 
 //Function that gets called in Config constructor when a 'location' keyword is found
 //Searches and returns the body of the location
-std::vector<std::string>	returnLocationBody(std::vector<std::string> &serverVector, size_t i, size_t end)
+std::vector<std::string>	return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end)
 {
-	std::vector<std::string>	locationBody;
+	std::vector<std::string>	location_body;
 	while (i < end){
-		locationBody.push_back(serverVector[i]);
+		location_body.push_back(server_vector[i]);
 		i++;
 	}
-	return (locationBody);
+	return (location_body);
 }
 
 
 //converts string to unsigned int
 //if input is not only digits 0 is returned
-unsigned int	stringToUnsigned(std::string &word)
+unsigned int	string_to_unsigned(std::string &word)
 {
 	for (size_t i = 0; i < word.length(); i++)
 	{
@@ -49,79 +49,79 @@ unsigned int	stringToUnsigned(std::string &word)
 
 //If a second word is found it is converted to an unsigned int (if possible)
 //If yes: the unsigned is set either to the 'port' value or 'max_body_size'
-void	valueToUnsigned(Config &object, std::string &line, size_t &enumValue)
+void	value_to_unsigned(Config &object, std::string &line, size_t &enum_value)
 {
-	std::string		word = getSecondWord(line);
-	unsigned int	value = stringToUnsigned(word);
+	std::string		word = get_second_word(line);
+	unsigned int	value = string_to_unsigned(word);
 	if (value != 0)
 	{
-		if (enumValue == LISTEN)
-			object.setPort(value);
-		else if (enumValue == MAX_SIZE)
-			object.setMaxSize(value);
+		if (enum_value == LISTEN)
+			object.set_port(value);
+		else if (enum_value == MAX_SIZE)
+			object.set_max_size(value);
 	}
 }
 
 
 //When 'server names' is found this function is used to search all names and puts them in a string vector 
-void	valueToStringVector(Config &object, std::string &line)
+void	value_to_string_vector(Config &object, std::string &line)
 {
-	std::vector<std::string>	serverNames;
+	std::vector<std::string>	server_names;
 	std::string					name;
 
 	std::stringstream			ss(line);
 	ss >> name; 				//first word
 	while (ss >> name)
-		serverNames.push_back(name);
-	if (serverNames.empty())
+		server_names.push_back(name);
+	if (server_names.empty())
 		return ;
-	object.setServerNames(serverNames);
+	object.set_server_names(server_names);
 }
 
 
 //sets the value for root and cgi if a second word is encountered
-void	valueToString(Config &object, std::string &line, size_t &enumValue)
+void	value_to_string(Config &object, std::string &line, size_t &enum_value)
 {
-	std::string	value = getSecondWord(line);
+	std::string	value = get_second_word(line);
 	if (!value.empty())
 	{
-		if (enumValue == ROOT)
-			object.setRoot(value);
-		else if (enumValue == CGI)
-			object.setCgi(value);
+		if (enum_value == ROOT)
+			object.set_root(value);
+		else if (enum_value == CGI)
+			object.set_cgi(value);
 	}
 }
 
 
 //If  "error_page  404 path/name.html" is found in config file, the path value is changed from default to 'path/name.html'
-void	valueToError(Config &object, std::string &line)
+void	value_to_error(Config &object, std::string &line)
 {
 	std::string			value;
-	std::string			errorCodeString;
-	int					errorCode;
+	std::string			error_code_string;
+	int					error_code;
 
-	errorCodeString = getSecondWord(line);
-	if (errorCodeString.empty()){
+	error_code_string = get_second_word(line);
+	if (error_code_string.empty()){
 		std::cerr << "No error code provided in config file" << std::endl;
-		return ;
+		exit(EXIT_FAILURE) ;
 	}
-	errorCode = stoi(errorCodeString);
-	if (errorCode == 0){
+	error_code = stoi(error_code_string);
+	if (error_code == 0){
 		std::cerr << "No correct error code provided in config file" << std::endl;
-		return ;
+		exit(EXIT_FAILURE) ;
 	}
-	value = getThirdWord(line);
+	value = get_third_word(line);
 	if (value.empty()){
-		std::cerr << "No error page provided for error code '" << errorCode << "' in config file" << std::endl;
-		return ;
+		std::cerr << "No error page provided for error code '" << error_code << "' in config file" << std::endl;
+		exit(EXIT_FAILURE) ;
 	}
-	object.setErrorPage(errorCode, value);
+	object.set_error_page(error_code, value);
 }
 
 
 //Creates a map<string,bool> for the methods map in the Location class
 //All the values are iniated to be false at first
-std::map<std::string, bool>	returnFalseMethodsMap(void)
+std::map<std::string, bool>	return_false_methods_map(void)
 {
 	std::map<std::string, bool>	methods;
 	methods["GET"] = false;
@@ -134,7 +134,7 @@ std::map<std::string, bool>	returnFalseMethodsMap(void)
 
 
 //Creates a map<int,string> where all error codes are set to default path
-std::map<int,std::string>	returnDefaultErrormap(void)
+std::map<int,std::string>	return_default_error_map(void)
 {
 	std::map<int,std::string> error;
 	error[400] = "default/error/400.html";
@@ -151,7 +151,7 @@ std::map<int,std::string>	returnDefaultErrormap(void)
 
 //Function that truncates the string if a char c is found
 //If not found the original string is not truncated and returned
-std::string	truncateString(const std::string &str, char c)
+std::string	truncate_string(const std::string &str, char c)
 {
 	size_t	position = str.find(c);
 	if (position != std::string::npos)
@@ -160,7 +160,7 @@ std::string	truncateString(const std::string &str, char c)
 }
 
 //Returns third word of string line, if no 3rd word is found, a empty string is returned
-std::string	getThirdWord(std::string &line)
+std::string	get_third_word(std::string &line)
 {
 	std::stringstream	ss(line);
 	std::string			word;
@@ -174,7 +174,7 @@ std::string	getThirdWord(std::string &line)
 }
 
 //Returns second word of string line, if no 2nd word is found, a empty string is returned
-std::string	getSecondWord(std::string &line)
+std::string	get_second_word(std::string &line)
 {
 	std::stringstream	ss(line);
 	std::string			word;
@@ -187,53 +187,53 @@ std::string	getSecondWord(std::string &line)
 
 
 //Finds first word of string 'line' and returns this word
-std::string findFirstWord(std::string &line) 
+std::string find_first_word(std::string &line) 
 {
     std::stringstream ss(line);
-    std::string firstWord;
-    ss >> firstWord;
-    return firstWord;
+    std::string first_word;
+    ss >> first_word;
+    return first_word;
 }
 
 
 // Function to check if each bracket '{' has a matching closing bracket '}'
-bool	checkBrackets(const std::vector<std::string> &vec)
+bool	check_brackets(const std::vector<std::string> &vec)
 {
-	int	openBrackets = 0;
+	int	open_brackets = 0;
 	for (size_t line = 0; line < vec.size(); line++)
 	{
 		for (size_t pos = 0; pos < vec[line].length(); pos++)
 		{
 			if (vec[line].at(pos) == '{')
-				openBrackets++;
+				open_brackets++;
 			else if (vec[line].at(pos) == '}'){
-				if (openBrackets == 0)
+				if (open_brackets == 0)
 					return (false);
-				openBrackets--;
+				open_brackets--;
 			}
 		}
 	}
-	if (openBrackets != 0)
+	if (open_brackets != 0)
 		return (false);
 	return (true);
 }
 
 //Searches on which line number the closing bracket '}' is found
 //'OpenBrackets' count is used for the server block because location also has open brackets
-size_t	findClosingBracket(const std::vector<std::string> &vec, size_t line)
+size_t	find_closing_bracket(const std::vector<std::string> &vec, size_t line)
 {
 	line++;
-	int	openBrackets = 1;
+	int	open_brackets = 1;
 	int	check = 0;
 	for (; line < vec.size(); line++)
 	{
 		for (size_t pos = 0; pos < vec[line].length(); pos++)
 		{
 			if (vec[line].at(pos) == '{')
-				openBrackets++;
+				open_brackets++;
 			else if (vec[line].at(pos) == '}')
-				openBrackets--;
-			if (openBrackets == 0){
+				open_brackets--;
+			if (open_brackets == 0){
 				check = 1;
 				break ;
 			}

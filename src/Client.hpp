@@ -16,7 +16,7 @@ class Client
 {
 public:
 	Client() {}
-	Client(int client_sockfd, sockaddr_in client_address, socklen_t client_address_len);
+	Client(int client_sockfd, sockaddr_in client_address);
 	int			get_sockfd(void) const;
 	void		close(void);
 	std::string	get_ip(void) const;
@@ -25,7 +25,6 @@ public:
 private:
 	int				_client_sockfd;
 	sockaddr_in		_client_address;
-	socklen_t		_client_address_len;
 
 	Optional<ParsedRequest>	_request;
 	Optional<CGI>	_cgi;

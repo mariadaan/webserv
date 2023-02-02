@@ -38,7 +38,7 @@ Client &Server::accept()
 	int client_sockfd = ::accept(this->_server_sockfd, (sockaddr*) &client_address, &client_len);
 	if (client_sockfd < 0)
 		throw std::runtime_error("Error accepting connection");
-	Client client(client_sockfd, client_address, client_len);
+	Client client(client_sockfd, client_address);
 	this->_clients[client_sockfd] = client;
 	return this->_clients.at(client_sockfd);
 }

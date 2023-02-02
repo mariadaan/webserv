@@ -9,20 +9,19 @@
 #include <unistd.h>
 #include <sstream>
 
-
-int PORT = 8080;
 const int BACKLOG = 5;
 
 Logger logger;
 
 int main(int argc, char *argv[]) {
+	std::vector<Config>	config_vector = parse_config("root/conf/server.conf");
+	int PORT = config_vector[0].get_port();
 	if (argc > 1) {
 		std::stringstream ss;
 		std::string s(argv[1]);
 		ss << s;
 		ss >> PORT;
 	}
-	std::vector<Config>	config_vector = parse_config(argv[1]);
 	logger << Logger::info << "Starting server on port " << PORT << std::endl;
 	try {
 		Server serverSocket(PF_INET, SOCK_STREAM, 0);

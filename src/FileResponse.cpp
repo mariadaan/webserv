@@ -1,4 +1,5 @@
 #include "FileResponse.hpp"
+#include "Logger.hpp"
 #include "util.hpp"
 
 FileResponse::FileResponse(const std::string &request_path){
@@ -42,8 +43,17 @@ void FileResponse::generate_response(void) {
 		this->_response_headers = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
 	}
 	else {
-		file_extension = this->_filename.substr(this->_filename.find_last_of(".") + 1);
-		this->_response_headers = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n";
+		file_extension = this->_filename.substr(this->_filename.find_last_of(".") + 1); // TODO: wat als er geen extensie is, txt bestand van maken?
+		try
+		{
+			this->_content_type = util::get_content_type(file_extension);
+		}
+		catch(const std::exception& e)
+		{
+			logger << Logger::error << "Requested file type invalid, exception thrown: " << e.what() << std::endl;
+			// TODO: error page terugsturen? wat te doen??
+		}
+		this->_response_headers = "HTTP/1.1 200 OK\r\nContent-Type: " + this->_content_type + "\r\n\r\n";
 	}
 }
 

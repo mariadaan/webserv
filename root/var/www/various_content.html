@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Multimedia Example</title>
+  </head>
+  <body>
+    <h1>GIF Image:</h1>
+    <img src="api.gif" alt="Example GIF">
+
+    <h1>PDF Document:</h1>
+    <a href="beejs_guide.pdf">Download PDF</a>
+
+    <h1>MPEG Audio File:</h1>
+    <audio controls>
+      <source src="burndembridges.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+
+    <h1>JSON Data:</h1>
+    <pre id="json-data"></pre>
+
+    <script>
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "webserv_data.json", true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+          document.getElementById("json-data").innerText = xhr.responseText;
+        }
+      };
+      xhr.send();
+    </script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
 #include "FileResponse.hpp"
+#include "Logger.hpp"
 #include "util.hpp"
 
 FileResponse::FileResponse(const std::string &request_path){
@@ -42,8 +43,23 @@ void FileResponse::generate_response(void) {
 		this->_response_headers = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
 	}
 	else {
-		file_extension = this->_filename.substr(this->_filename.find_last_of(".") + 1);
-		this->_response_headers = "HTTP/1.1 200 OK\r\nContent-Type: text/" + file_extension + "\r\n\r\n";
+		util::print(this->_filename);
+
+		if (this->_filename.find_last_of(".") == std::string::npos
+			|| this->_filename.find_last_of(".") == 0) {
+			file_extension = "txt";
+		}
+		else
+			file_extension = this->_filename.substr(this->_filename.find_last_of(".") + 1);
+		try
+		{
+			this->_content_type = util::get_content_type(file_extension);
+		}
+		catch(const std::exception& e)
+		{
+			logger << Logger::error << "Requested file type with extension \"" << file_extension << "\" invalid." << std::endl;
+		}
+		this->_response_headers = "HTTP/1.1 200 OK\r\nContent-Type: " + this->_content_type + "\r\n\r\n";
 	}
 }
 

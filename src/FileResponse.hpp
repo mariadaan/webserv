@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <map>
 
 class FileResponse {
 public:
@@ -22,6 +23,7 @@ private:
 	bool _is_home;
 	std::string _page_content;
 	std::string _response_headers;
+	std::string _content_type;
 };
 
 #endif

@@ -27,7 +27,6 @@ private:
 	int						_domain;
 	int						_socket_type;
 	int						_protocol;
-	int						_address_type;
 	sockaddr_in				_address;
 	int						_portnum;
 	int						_backlog;

@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "EventQueue.hpp"
 #include "Logger.hpp"
+#include "configParser.hpp"
 
 #include <iostream>
 #include <string>
@@ -8,12 +9,13 @@
 #include <unistd.h>
 #include <sstream>
 
-int PORT = 8080;
 const int BACKLOG = 5;
 
 Logger logger;
 
 int main(int argc, char *argv[]) {
+	std::vector<Config>	config_vector = parse_config("root/conf/server.conf");
+	int PORT = config_vector[0].get_port();
 	if (argc > 1) {
 		std::stringstream ss;
 		std::string s(argv[1]);

@@ -41,4 +41,6 @@ private:
 	std::string		_content_type;
 };
 
+std::string get_content_type(std::string file_extension);
+
 #endif

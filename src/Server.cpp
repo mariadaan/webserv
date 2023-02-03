@@ -13,7 +13,6 @@ Server::Server(int domain, int socketType, int protocol)
 
 void Server::set_config(Config &config) {
 	this->_config = &config;
-	logger << Logger::info << "Saved configurations in server" << std::endl;
 }
 
 void Server::set_address(void)

@@ -14,23 +14,23 @@ const int BACKLOG = 5;
 Logger logger;
 
 int main(int argc, char *argv[]) {
-	std::vector<Config>	config_vector = parse_config("root/conf/server.conf");
-	int PORT = config_vector[0].get_port();
-	if (argc > 1) {
-		std::stringstream ss;
-		std::string s(argv[1]);
-		ss << s;
-		ss >> PORT;
-	}
-	logger << Logger::info << "Starting server on port " << PORT << std::endl;
+	char *config_file;
+	if (argc < 2)
+		config_file = "root/conf/server.conf";
+	else
+		config_file = argv[1];
+	std::vector<Config>	config_vector = parse_config(config_file);
+	logger << Logger::info << "Parsed config file: " << config_file << std::endl;
 	try {
 		Server serverSocket(PF_INET, SOCK_STREAM, 0);
 		serverSocket.set_config(config_vector[0]);
+		logger << Logger::info << "Starting server on port " << config_vector[0].get_port() << std::endl;
+
 		serverSocket.set_address();
 		serverSocket.bind();
 		serverSocket.listen(BACKLOG);
 
-		logger << Logger::info << "Listening on port " << PORT << ": http://localhost:" << PORT << std::endl;
+		logger << Logger::info << "Listening on port " << config_vector[0].get_port() << ": http://localhost:" << config_vector[0].get_port() << std::endl;
 
 		EventQueue keventQueue(serverSocket);
 		keventQueue.add_event_listener(serverSocket.get_sockfd());

@@ -31,7 +31,6 @@ private:
 	int						_socket_type;
 	int						_protocol;
 	sockaddr_in				_address;
-	int						_portnum;
 	int						_backlog;
 	std::map<int, Client>	_clients;
 	Config					*_config;

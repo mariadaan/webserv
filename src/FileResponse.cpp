@@ -39,12 +39,9 @@ void FileResponse::generate_response(void) {
 
 	this->load_content();
 	if (!this->_file_accessible) {
-		// TODO: response headers beter opslaan, status code en content type splitsen
-		this->_response_headers = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
+		this->_response_status = this->get_response_status(HTTP_NOT_FOUND);
 	}
 	else {
-		util::print(this->_filename);
-
 		if (this->_filename.find_last_of(".") == std::string::npos
 			|| this->_filename.find_last_of(".") == 0) {
 			file_extension = "txt";
@@ -59,10 +56,25 @@ void FileResponse::generate_response(void) {
 		{
 			logger << Logger::error << "Requested file type with extension \"" << file_extension << "\" invalid." << std::endl;
 		}
-		this->_response_headers = "HTTP/1.1 200 OK\r\nContent-Type: " + this->_content_type + "\r\n\r\n";
+		this->_response_status = this->get_response_status(HTTP_OK);
 	}
 }
 
+std::string FileResponse::get_response_status(int status_code) const
+{
+	std::map<int, std::string> code_to_header;
+	code_to_header[HTTP_OK] = "200 OK";
+	code_to_header[HTTP_CREATED] = "201 Created";
+	code_to_header[HTTP_NO_CONTENT] = "204 No Content";
+	code_to_header[HTTP_BAD_REQUEST] = "400 Bad Request";
+	code_to_header[HTTP_UNAUTHORIZED] = "401 Unauthorized";
+	code_to_header[HTTP_FORBIDDEN] = "403 Forbidden";
+	code_to_header[HTTP_NOT_FOUND] = "404 Not Found";
+	code_to_header[HTTP_INTERNAL_SERVER_ERROR] = "500 Internal Server Error";
+	code_to_header[HTTP_SERVICE_UNAVAILABLE] = "503 Service Unavailable";
+	return code_to_header.at(status_code);
+}
+
 std::string FileResponse::get_response(void) const {
-	return this->_response_headers + this->_page_content;
+	return "HTTP/1.1 " + this->_response_status + CLRF + "Content-Type: " + this->_content_type + CLRF + CLRF + this->_page_content;
 }

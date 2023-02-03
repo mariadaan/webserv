@@ -50,7 +50,7 @@ void FileResponse::generate_response(void) {
 			file_extension = this->_filename.substr(this->_filename.find_last_of(".") + 1);
 		try
 		{
-			this->_content_type = util::get_content_type(file_extension);
+			this->_content_type = get_content_type(file_extension);
 		}
 		catch(const std::exception& e)
 		{

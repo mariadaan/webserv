@@ -25,7 +25,8 @@ int main(int argc, char *argv[]) {
 	logger << Logger::info << "Starting server on port " << PORT << std::endl;
 	try {
 		Server serverSocket(PF_INET, SOCK_STREAM, 0);
-		serverSocket.set_address(PORT);
+		serverSocket.set_config(config_vector[0]);
+		serverSocket.set_address();
 		serverSocket.bind();
 		serverSocket.listen(BACKLOG);
 

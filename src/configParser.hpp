@@ -1,3 +1,6 @@
+#ifndef CONFIGPARSER_HPP
+# define CONFIGPARSER_HPP
+
 #include <stdlib.h>
 #include <string>
 #include <iostream>
@@ -108,3 +111,5 @@ std::vector<std::vector<std::string> >	create_server_vector(const std::vector<st
 const std::vector<std::string>			get_file_vector(const std::string &file_name);
 //parse_config.cpp
 std::vector<Config>						parse_config(char const *conf_file);
+
+#endif

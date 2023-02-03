@@ -2,6 +2,7 @@
  #define SERVER_HPP
 
 #include "Client.hpp"
+#include "configParser.hpp"
 
 #include <map>
 #include <iostream>
@@ -14,7 +15,9 @@ class Server
 public:
 	Server(int domain, int socketType, int protocol);
 
-	void	set_address(int portnum);
+	void set_config(Config &config);
+
+	void	set_address();
 	void	bind(void);
 	void	listen(int backlog);
 	Client	&accept();
@@ -31,6 +34,7 @@ private:
 	int						_portnum;
 	int						_backlog;
 	std::map<int, Client>	_clients;
+	Config					*_config;
 };
 
 #endif

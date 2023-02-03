@@ -1,5 +1,7 @@
 #include "Server.hpp"
 #include "Client.hpp"
+#include "configParser.hpp"
+#include "Logger.hpp"
 
 Server::Server(int domain, int socketType, int protocol)
 	: _domain(domain), _socket_type(socketType), _protocol(protocol)
@@ -9,13 +11,17 @@ Server::Server(int domain, int socketType, int protocol)
 		throw std::runtime_error("Error creating socket");
 }
 
-void Server::set_address(int portnum)
+void Server::set_config(Config &config) {
+	this->_config = &config;
+	logger << Logger::info << "Saved configurations in server" << std::endl;
+}
+
+void Server::set_address(void)
 {
-	this->_portnum = portnum;
 	std::memset(&_address, 0, sizeof(_address)); // pad the structure to the length of a struct sockaddr. set to zero
 	_address.sin_family = AF_INET; // IPv4
 	_address.sin_addr.s_addr = INADDR_ANY; // local address
-	_address.sin_port = htons(_portnum); // convert to network byte order
+	_address.sin_port = htons(this->_config->get_port()); // convert to network byte order
 }
 
 void Server::bind(void)

@@ -1,4 +1,4 @@
-// TODO: create << operator overloads for the ParsedConfigFile and Config class
+// TODO: delete this file and create << operator overloads for the ParsedConfigFile and Config class
 
 #include <iostream>
 #include <vector>

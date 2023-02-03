@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	ParsedConfigFile config(config_filename);
 	logger << Logger::info << "Parsed config file: " << config_filename << std::endl;
 
-	// Is zoiets de bedoeling? Hoe zorgen we ervoor dat we meerdere ports kunnen openen?
+	// Is zoiets de bedoeling? Hoe zorgen we ervoor dat we meerdere ports tegelijk kunnen openen?
 	for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {
 		try {
 			Server serverSocket(PF_INET, SOCK_STREAM, 0);

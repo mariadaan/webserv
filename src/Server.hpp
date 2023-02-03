@@ -2,7 +2,7 @@
  #define SERVER_HPP
 
 #include "Client.hpp"
-#include "configParser.hpp"
+#include "Config.hpp"
 
 #include <map>
 #include <iostream>

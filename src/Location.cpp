@@ -1,5 +1,6 @@
 #include "Location.hpp"
-#include "configParser.hpp"
+#include "Config.hpp"
+// #include "configParser.hpp"
 
 //                       **********************************************
 //                       ************** LOCATION CLASS ****************

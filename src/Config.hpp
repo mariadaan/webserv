@@ -6,6 +6,18 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <sstream> 
+
+
+enum conf_parser {
+	LISTEN = 1,
+	SERVER_NAME,
+	ROOT,
+	LOCATION,
+	MAX_SIZE,
+	ERROR_PAGE,
+	CGI
+};
 
 class Config
 {
@@ -46,5 +58,18 @@ class Config
 		void	call_keyword_function(size_t &enumValue, std::string &line);
 		void	print_config_class();
 };
+
+size_t									determine_if_keyword(const std::string &word);
+std::vector<std::string>				return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end);
+unsigned int							string_to_unsigned(std::string &word);
+void									value_to_unsigned(Config &object, std::string &line, size_t &enum_value);
+void									value_to_string_vector(Config &object, std::string &line);
+void									value_to_string(Config &object, std::string &line, size_t &enum_value);
+void									value_to_error(Config &object, std::string &line);
+std::map<std::string, bool>				return_false_methods_map(void);
+std::map<int,std::string>				return_default_error_map(void);
+std::string								get_third_word(std::string &line);
+std::string								get_second_word(std::string &line);
+std::string 							find_first_word(std::string &line) ;
 
 #endif

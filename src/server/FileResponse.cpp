@@ -76,7 +76,7 @@ std::string FileResponse::get_response_status(int status_code) const
 }
 
 std::string FileResponse::get_response(void) const {
-	return "HTTP/1.1 " + this->_response_status + CLRF + "Content-Type: " + this->_content_type + CLRF + CLRF + this->_page_content;
+	return "HTTP/1.1 " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
 }
 
 // if file_extension not in map, exception will be thrown

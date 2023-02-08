@@ -7,7 +7,7 @@
 #include <sstream>
 #include <map>
 
-#define CLRF "\r\n"
+#define CRLF "\r\n"
 
 enum HTTP_STATUS_CODES {
 	HTTP_OK = 200,

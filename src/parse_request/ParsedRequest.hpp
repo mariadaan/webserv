@@ -1,6 +1,7 @@
 #ifndef PARSEDREQUEST_HPP
 # define PARSEDREQUEST_HPP
 
+#include "Location.hpp"
 #include <vector>
 #include <map>
 #include <string>
@@ -29,6 +30,7 @@ public:
 	std::map<std::string, std::string> 	headers;
 	std::string 						body;
 	bool 								is_chunked;
+	Location							*location;
 
 	ParsedRequest(std::string str);
 	std::string const	&get_header(std::string key) const;

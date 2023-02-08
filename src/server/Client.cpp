@@ -58,8 +58,7 @@ void Client::_handle_request(std::string const &received) {
 		return;
 	}
 
-	logger << Logger::info << "Received request:" << std::endl;
-	logger << Logger::info << this->_request << std::endl;
+	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
 
 	if (!this->_request.get_script_name().empty()) {
 		this->_cgi = Optional<CGI>(CGI(this->_request, *this));

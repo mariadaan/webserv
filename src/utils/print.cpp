@@ -1,4 +1,7 @@
-#include "../configParser.hpp"
+// TODO: delete this file and create << operator overloads for the ParsedConfigFile and Config class
+
+#include <iostream>
+#include <vector>
 
 //prints a std::vector<std::string> string by string
 void	print_string_vector(std::vector<std::string> &vec)

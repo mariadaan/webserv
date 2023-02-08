@@ -1,12 +1,13 @@
-#include <stdlib.h>
-#include <string>
-#include <iostream>
-#include <stdexcept>
-#include <fstream>
+#ifndef CONFIG_HPP
+# define CONFIG_HPP
+
+#include "Location.hpp"
+
 #include <iostream>
 #include <vector>
 #include <map>
 #include <sstream> 
+
 
 enum conf_parser {
 	LISTEN = 1,
@@ -16,29 +17,6 @@ enum conf_parser {
 	MAX_SIZE,
 	ERROR_PAGE,
 	CGI
-};
-
-class Location
-{
-	private:
-		std::string					_index;
-		std::map<std::string, bool>	_request_methods;
-		std::string					_upload;
-		bool						_auto_index;
-
-	public:
-		//constructors
-		Location();
-		Location(std::vector<std::string> &location_body);
-		~Location();
-
-		//getters
-		const std::string					&get_index() const;
-		const std::string					&get_upload() const;
-		bool								get_request_methods(const std::string &key) const;
-		bool							 	get_auto_index() const;
-
-		void	print_location_class();
 };
 
 class Config
@@ -81,11 +59,6 @@ class Config
 		void	print_config_class();
 };
 
-
-//print.cpp
-void									print_string_vector(std::vector<std::string> &vec);
-void									print_server_vector(std::vector<std::vector<std::string> > &vec);
-//configUtils.cpp
 size_t									determine_if_keyword(const std::string &word);
 std::vector<std::string>				return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end);
 unsigned int							string_to_unsigned(std::string &word);
@@ -95,16 +68,8 @@ void									value_to_string(Config &object, std::string &line, size_t &enum_val
 void									value_to_error(Config &object, std::string &line);
 std::map<std::string, bool>				return_false_methods_map(void);
 std::map<int,std::string>				return_default_error_map(void);
-std::string								truncate_string(const std::string &str, char c);
 std::string								get_third_word(std::string &line);
 std::string								get_second_word(std::string &line);
 std::string 							find_first_word(std::string &line) ;
-bool									check_brackets(const std::vector<std::string> &vec);
-size_t									find_closing_bracket(const std::vector<std::string> &vec, size_t line);
-//configParser.cpp
-std::vector<Config>						set_config_vector(std::vector<std::vector<std::string> > &server_vector);
-std::vector<std::string>				find_server_block(const std::vector<std::string> &vec);
-std::vector<std::vector<std::string> >	create_server_vector(const std::vector<std::string> &file);
-const std::vector<std::string>			get_file_vector(const std::string &file_name);
-//parse_config.cpp
-std::vector<Config>						parse_config(char const *conf_file);
+
+#endif

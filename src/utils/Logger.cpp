@@ -8,6 +8,9 @@ Logger &Logger::filter(Flag flag) {
 Logger &Logger::operator<<(Flag flag) {
 	this->_flag = flag;
 	switch (this->_flag) {
+		case Logger::debug:
+			this->_ios << "\x1b[32m" << "DEBUG:   " << "\x1b[0m";
+			break;
 		case Logger::info:
 			this->_ios << "\x1b[36m" << "INFO:    " << "\x1b[0m";
 			break;

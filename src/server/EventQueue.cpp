@@ -3,10 +3,21 @@
 #include "Client.hpp"
 #include "Logger.hpp"
 
-EventQueue::EventQueue(Server &server) : _server(server) {
+EventQueue::EventQueue() {
 	this->_kq = kqueue();
 	if (this->_kq == -1)
 		throw std::runtime_error("Error creating kqueue");
+}
+
+void EventQueue::add_server(Server &server) {
+	this->_servers[server.get_sockfd()] = server;
+	this->add_event_listener(server.get_sockfd());
+}
+
+void EventQueue::close_servers(void) {
+	for (std::map<int, Server>::iterator it = this->_servers.begin(); it != this->_servers.end(); it++) {
+		it->second.close();
+	}
 }
 
 /* Used for both add server listener at the very start, and adding client events */
@@ -34,18 +45,20 @@ void EventQueue::event_loop(void) {
 		int num_events = ::kevent(this->_kq, NULL, 0, &ev_rec, 1, NULL);
 		if (num_events == -1)
 			throw std::runtime_error("Error: kevent wait");
-		if (ev_rec.ident == (uintptr_t)this->_server.get_sockfd())
-			this->accept_client();
+		if (this->_servers.count(ev_rec.ident) > 0) {
+			this->accept_client_on(this->_servers.at(ev_rec.ident));
+		}
 		else {
 			logger << Logger::info << "Got event on client: " << ev_rec.ident << std::endl;
-			this->_server.get_client(ev_rec.ident).handle_event(ev_rec);
+			this->_servers.at(this->_client_server[ev_rec.ident]).get_client(ev_rec.ident).handle_event(ev_rec);
 		}
 	}
 }
 
-void EventQueue::accept_client() {
+void EventQueue::accept_client_on(Server &server) {
 	try {
-		Client &client = this->_server.accept();
+		Client &client = server.accept();
+		this->_client_server[client.get_sockfd()] = server.get_sockfd();
 		logger << Logger::info << "Accepted client: " << client.get_sockfd() << " (" << client.get_ip() << ")" << std::endl;
 		this->add_event_listener(client.get_sockfd());
 	}

@@ -13,6 +13,7 @@
 class Server
 {
 public:
+	Server() {};
 	Server(int domain, int socketType, int protocol);
 
 	void set_config(Config &config);

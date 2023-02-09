@@ -35,13 +35,13 @@ Config& Config::operator=(Config other)
 Config::Config(std::vector<std::string> &server_vector)
 	: _port(80), _max_size(1), _error_page(return_default_error_map())
 {
-	size_t	enum_value;
+	Config::conf_parser	enum_value;
 
 	for (size_t i = 0; i < server_vector.size(); i++)
 	{
 		std::string word = find_first_word(server_vector[i]);
 		enum_value = determine_if_keyword(word);
-		if (enum_value == 0)
+		if (enum_value == NOT_A_KEYWORD)
 			continue ;
 		else if (enum_value == LOCATION)
 		{
@@ -88,7 +88,7 @@ const unsigned int							&Config::get_max_size() const 	{return (_max_size);}
 const std::vector<std::string>				&Config::get_server_names() const {return (_server_names);}
 const std::string							&Config::get_root() const 		{return (_root);}
 const std::string							&Config::get_cgi() const 		{return (_cgi);}
-const Location								&Config::get_location(const std::string& key) const 
+const Location								&Config::get_location(const std::string& key) const
 {
 	return (this->_locations.at(key));
 	//  std::map<std::string,Location>::const_iterator it = _locations.find(key);
@@ -110,7 +110,7 @@ const std::string							&Config::get_error_page(const int &key) const
 
 
 
-void	Config::call_keyword_function(size_t &enum_value, std::string &line)
+void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string &line)
 {
 
 	if (enum_value == LISTEN || enum_value == MAX_SIZE)
@@ -128,7 +128,7 @@ void	Config::call_keyword_function(size_t &enum_value, std::string &line)
 void	Config::print_config_class(void)
 {
 	std::cout << "address : " << this->get_port() << std::endl << std::endl;
-	
+
 	std::vector<std::string> server_names = this->get_server_names();
 	std::cout << "server name(s) :" << std::endl;
 	for (size_t i = 0; i < server_names.size(); i++)
@@ -152,23 +152,23 @@ void	Config::print_config_class(void)
 
 
 //Checks if the word found is one of the keywords
-size_t	determine_if_keyword(const std::string &word)
+Config::conf_parser	determine_if_keyword(const std::string &word)
 {
 	if (word == "listen")
-		return (LISTEN);
+		return (Config::LISTEN);
 	else if (word == "server_name")
-		return (SERVER_NAME);
+		return (Config::SERVER_NAME);
 	else if (word == "root")
-		return (ROOT);
+		return (Config::ROOT);
 	else if (word == "location")
-		return (LOCATION);
+		return (Config::LOCATION);
 	else if (word == "client_max_body_size")
-		return (MAX_SIZE);
+		return (Config::MAX_SIZE);
 	else if (word == "error_page")
-		return (ERROR_PAGE);
+		return (Config::ERROR_PAGE);
 	else if (word == "cgi")
-		return (CGI);
-	return (0);
+		return (Config::CGI);
+	return (Config::NOT_A_KEYWORD);
 }
 
 
@@ -200,21 +200,21 @@ unsigned int	string_to_unsigned(std::string &word)
 
 //If a second word is found it is converted to an unsigned int (if possible)
 //If yes: the unsigned is set either to the 'port' value or 'max_body_size'
-void	value_to_unsigned(Config &object, std::string &line, size_t &enum_value)
+void	value_to_unsigned(Config &object, std::string &line, Config::conf_parser &enum_value)
 {
 	std::string		word = get_second_word(line);
 	unsigned int	value = string_to_unsigned(word);
 	if (value != 0)
 	{
-		if (enum_value == LISTEN)
+		if (enum_value == Config::LISTEN)
 			object.set_port(value);
-		else if (enum_value == MAX_SIZE)
+		else if (enum_value == Config::MAX_SIZE)
 			object.set_max_size(value);
 	}
 }
 
 
-//When 'server names' is found this function is used to search all names and puts them in a string vector 
+//When 'server names' is found this function is used to search all names and puts them in a string vector
 void	value_to_string_vector(Config &object, std::string &line)
 {
 	std::vector<std::string>	server_names;
@@ -231,14 +231,14 @@ void	value_to_string_vector(Config &object, std::string &line)
 
 
 //sets the value for root and cgi if a second word is encountered
-void	value_to_string(Config &object, std::string &line, size_t &enum_value)
+void	value_to_string(Config &object, std::string &line, Config::conf_parser &enum_value)
 {
 	std::string	value = get_second_word(line);
 	if (!value.empty())
 	{
-		if (enum_value == ROOT)
+		if (enum_value == Config::ROOT)
 			object.set_root(value);
-		else if (enum_value == CGI)
+		else if (enum_value == Config::CGI)
 			object.set_cgi(value);
 	}
 }
@@ -329,7 +329,7 @@ std::string	get_second_word(std::string &line)
 
 
 //Finds first word of string 'line' and returns this word
-std::string find_first_word(std::string &line) 
+std::string find_first_word(std::string &line)
 {
 	std::stringstream ss(line);
 	std::string first_word;

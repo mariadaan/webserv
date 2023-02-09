@@ -6,18 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <sstream> 
-
-
-enum conf_parser {
-	LISTEN = 1,
-	SERVER_NAME,
-	ROOT,
-	LOCATION,
-	MAX_SIZE,
-	ERROR_PAGE,
-	CGI
-};
+#include <sstream>
 
 class Config
 {
@@ -29,8 +18,19 @@ class Config
 		std::string							_cgi;
 		std::map<std::string,Location>		_locations;
 		std::map<int, std::string>			_error_page;
-	
+
 	public:
+		enum conf_parser { // NOTE: Should probably be private, when all functions are moved into this class
+			NOT_A_KEYWORD = 0,
+			LISTEN = 1,
+			SERVER_NAME,
+			ROOT,
+			LOCATION,
+			MAX_SIZE,
+			ERROR_PAGE,
+			CGI
+		};
+
 		//constructors
 		Config();
 		~Config();
@@ -44,7 +44,7 @@ class Config
 		const std::string				&get_root() const;
 		const std::string				&get_cgi() const;
 		const Location					&get_location(const std::string& key) const;
-		const std::string				&get_error_page(const int &key) const;	
+		const std::string				&get_error_page(const int &key) const;
 
 		//setters
 		void	set_port(unsigned int &port);
@@ -55,16 +55,16 @@ class Config
 		void	set_locations(const std::string &key, const Location &value);
 		void	set_error_page(const int &key, const std::string &value);
 
-		void	call_keyword_function(size_t &enumValue, std::string &line);
+		void	call_keyword_function(conf_parser &enumValue, std::string &line);
 		void	print_config_class();
 };
 
-size_t									determine_if_keyword(const std::string &word);
+Config::conf_parser						determine_if_keyword(const std::string &word);
 std::vector<std::string>				return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end);
 unsigned int							string_to_unsigned(std::string &word);
-void									value_to_unsigned(Config &object, std::string &line, size_t &enum_value);
+void									value_to_unsigned(Config &object, std::string &line, Config::conf_parser &enum_value);
 void									value_to_string_vector(Config &object, std::string &line);
-void									value_to_string(Config &object, std::string &line, size_t &enum_value);
+void									value_to_string(Config &object, std::string &line, Config::conf_parser &enum_value);
 void									value_to_error(Config &object, std::string &line);
 std::map<std::string, bool>				return_false_methods_map(void);
 std::map<int,std::string>				return_default_error_map(void);

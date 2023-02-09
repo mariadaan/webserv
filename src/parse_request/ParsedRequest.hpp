@@ -2,6 +2,7 @@
 # define PARSEDREQUEST_HPP
 
 #include "Location.hpp"
+#include "Optional.hpp"
 #include <vector>
 #include <map>
 #include <string>
@@ -30,7 +31,7 @@ public:
 	std::map<std::string, std::string> 	headers;
 	std::string 						body;
 	bool 								is_chunked;
-	Location							*location;
+	Optional<Location>					location;
 
 	ParsedRequest(std::string str);
 	std::string const	&get_header(std::string key) const;
@@ -41,6 +42,7 @@ public:
 	size_t 				get_content_length() const;
 	bool 				headers_finished() const;
 	void 				parse_part(std::string part);
+	void				set_location(std::map<std::string,Location> const &locations);
 
 protected:
 	ParsedRequest() {};

@@ -25,6 +25,19 @@ ParsedRequest::ParsedRequest(std::string str) : _headers_done(false) {
 	this->parse_part(str);
 }
 
+/* Save location in ParsedRequest if the path is a location block.
+	else, do nothing and do not initialise location. */
+void ParsedRequest::set_location(std::map<std::string,Location> const &locations)
+{
+	try
+	{
+		locations.at(this->path);
+		this->location = locations.at(this->path);
+		std::cout << this->location.get_index();
+	}
+	catch(const std::exception& e) {}
+}
+
 bool ParsedRequest::has_header(std::string key) const {
 	util::str_to_lower(key);
 	return (this->headers.count(key) > 0);

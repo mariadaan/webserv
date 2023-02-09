@@ -2,14 +2,15 @@
 #include "Logger.hpp"
 #include "util.hpp"
 
-FileResponse::FileResponse(const std::string &request_path){
-	this->_file_dir = "./root/var/www"; // to be defined by config
-	this->_filename = this->_file_dir + request_path;
-	this->_file_accessible = this->can_open_file();
-	if (request_path == "/") // TODO: dit verbeteren want dit is lelijk
-		this->_is_home = true;
+FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
+	this->_file_dir = config.get_root() + "/";
+	this->_filename = this->_file_dir + this->request.path;
+	if (this->request.location.is_set())
+		this->_filename = this->_file_dir + this->request.location.get_index();
 	else
-		this->_is_home = false;
+		this->_filename = this->_file_dir + this->request.path;
+	logger << Logger::warn << "filename: " << this->_filename << std::endl;
+	this->_file_accessible = this->can_open_file();
 }
 
 bool FileResponse::can_open_file() {
@@ -19,18 +20,17 @@ bool FileResponse::can_open_file() {
 		return true;
 	}
 	else {
+		logger << Logger::warn << "Couldnt open " << this->_filename << std::endl;
 		return false;
 	}
 }
 
 void FileResponse::load_content(void) {
 	if (this->_file_accessible) {
-		if (this->_is_home)
-			this->_filename = this->_filename + "index.html";
 		this->_page_content = util::file_to_str(this->_filename);
 	}
 	else {
-		this->_page_content = util::file_to_str(this->_file_dir + "/notfound.html");
+		this->_page_content = util::file_to_str(this->_file_dir + "notfound.html");
 	}
 }
 
@@ -76,7 +76,7 @@ std::string FileResponse::get_response_status(int status_code) const
 }
 
 std::string FileResponse::get_response(void) const {
-	return "HTTP/1.1 " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
+	return this->request.http_version + " " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
 }
 
 // if file_extension not in map, exception will be thrown

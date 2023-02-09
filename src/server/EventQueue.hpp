@@ -18,7 +18,7 @@ class EventQueue
 public:
 	EventQueue();
 
-	void add_server(Server &server);
+	void add_server(Server *server);
 	void close_servers(void);
 
 	void add_event_listener(int sockfd);
@@ -29,7 +29,7 @@ public:
 
 private:
 	int _kq;
-	std::map<int, Server> _servers;
+	std::map<int, Server *> _servers;
 	std::map<int, int> _client_server;
 };
 

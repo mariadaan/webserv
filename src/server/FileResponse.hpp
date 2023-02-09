@@ -1,6 +1,8 @@
 #ifndef FILERESPONSE_HPP
 # define FILERESPONSE_HPP
 
+#include "Config.hpp"
+#include "ParsedRequest.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -23,7 +25,11 @@ enum HTTP_STATUS_CODES {
 
 class FileResponse {
 public:
-	FileResponse(const std::string &request_path);
+	FileResponse(Config &config, ParsedRequest &request);
+
+	Config			&config;
+	ParsedRequest	&request;
+
 
 	bool			can_open_file();
 	void			load_content();
@@ -35,7 +41,7 @@ private:
 	std::string		_file_dir;
 	std::string		_filename;
 	bool			_file_accessible;
-	bool			_is_home;
+	// bool			_is_home;
 	std::string		_page_content;
 	std::string		_response_status;
 	std::string		_content_type;

@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	ParsedConfigFile config(config_filename);
 	logger << Logger::info << "Parsed config file: " << config_filename << std::endl;
 
+	EventQueue keventQueue;
 	// Is zoiets de bedoeling? Hoe zorgen we ervoor dat we meerdere ports tegelijk kunnen openen?
 	for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {
 		try {
@@ -36,15 +37,19 @@ int main(int argc, char *argv[]) {
 
 			logger << Logger::info << "Listening on port " << (*it).get_port() << ": http://localhost:" << (*it).get_port() << std::endl;
 
-			EventQueue keventQueue(serverSocket);
-			keventQueue.add_event_listener(serverSocket.get_sockfd());
-			keventQueue.event_loop();
-			serverSocket.close();
+			keventQueue.add_server(serverSocket);
 		}
 		catch(const std::exception& e) {
 			logger << Logger::error << e.what() << std::endl;
 		}
 	}
 
+	try {
+		keventQueue.event_loop();
+		keventQueue.close_servers();
+	}
+	catch(const std::exception& e) {
+		logger << Logger::error << e.what() << std::endl;
+	}
 	return 0;
 }

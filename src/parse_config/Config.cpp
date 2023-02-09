@@ -97,6 +97,11 @@ const Location								&Config::get_location(const std::string& key) const
 	// 	// throw std::out_of_range("Location not found");
 	// return (it->second);
 }
+
+const std::map<std::string,Location>	&Config::get_locations() const {
+	return this->_locations;
+}
+
 const std::string							&Config::get_error_page(const int &key) const
 {
 	std::map<int,std::string>::const_iterator it = _error_page.find(key);

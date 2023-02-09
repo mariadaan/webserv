@@ -44,6 +44,7 @@ class Config
 		const std::string				&get_root() const;
 		const std::string				&get_cgi() const;
 		const Location					&get_location(const std::string& key) const;
+		const std::map<std::string,Location>	&get_locations() const;
 		const std::string				&get_error_page(const int &key) const;
 
 		//setters

@@ -16,21 +16,25 @@ std::vector<Chunk> get_chunks(std::string data) {
 	while (true) {
 		if (waiting_for_size) {
 			size_t found = data.find("\r\n");
-			if (found == std::string::npos)
+			if (found == std::string::npos) {
+				save = data;
 				return (chunks);
+			}
 			std::string size_hex = data.substr(0, found);
 			std::stringstream ss;
 			ss << std::hex << size_hex;
-			logger << Logger::info << "size_hex: <" << size_hex << ">" << std::endl;
-			logger << Logger::info << "ss: <" << ss.str() << ">" << std::endl;
+			logger << Logger::debug << "size_hex: <" << size_hex << ">" << std::endl;
+			logger << Logger::debug << "ss: <" << ss.str() << ">" << std::endl;
 			ss >> size;
 			waiting_for_size = false;
 			waiting_for_data = true;
 			data = data.substr(found + 2);
 		}
 		if (waiting_for_data) {
-			if (data.size() < size)
+			if (data.size() < size) {
+				save = data;
 				return (chunks);
+			}
 			std::string chunk_content = data.substr(0, size);
 			chunks.push_back(Chunk(chunk_content, size));
 			waiting_for_data = false;
@@ -38,8 +42,10 @@ std::vector<Chunk> get_chunks(std::string data) {
 			data = data.substr(size);
 		}
 		if (waiting_for_crlf) {
-			if (data.substr(0, 2) != "\r\n")
+			if (data.substr(0, 2) != "\r\n") {
+				save = data;
 				return (chunks);
+			}
 			data = data.substr(2);
 		}
 	}

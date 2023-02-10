@@ -70,6 +70,7 @@ std::string FileResponse::get_response_status(int status_code) const
 	code_to_header[HTTP_UNAUTHORIZED] = "401 Unauthorized";
 	code_to_header[HTTP_FORBIDDEN] = "403 Forbidden";
 	code_to_header[HTTP_NOT_FOUND] = "404 Not Found";
+	code_to_header[HTTP_METHOD_NOT_ALLOWED] = "405 Method Not Allowed";
 	code_to_header[HTTP_INTERNAL_SERVER_ERROR] = "500 Internal Server Error";
 	code_to_header[HTTP_SERVICE_UNAVAILABLE] = "503 Service Unavailable";
 	return code_to_header.at(status_code);

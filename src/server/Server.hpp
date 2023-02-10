@@ -13,10 +13,9 @@
 class Server
 {
 public:
-	Server() {};
-	Server(int domain, int socketType, int protocol);
+	Server(Config &config, int domain, int socketType, int protocol);
 
-	void set_config(Config &config);
+	Config	&config;
 
 	void	set_address();
 	void	bind(void);
@@ -24,6 +23,7 @@ public:
 	Client	&accept();
 	void	close(void);
 	Client	&get_client(int client_sockfd);
+	std::map<int, Client *>	&get_clients();
 	int		get_sockfd(void) const;
 
 private:
@@ -33,8 +33,7 @@ private:
 	int						_protocol;
 	sockaddr_in				_address;
 	int						_backlog;
-	std::map<int, Client>	_clients;
-	Config					*_config;
+	std::map<int, Client *>	_clients;
 };
 
 #endif

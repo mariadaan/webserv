@@ -17,7 +17,7 @@ class Config
 		std::string							_root;
 		std::string							_cgi;
 		std::map<std::string,Location>		_locations;
-		std::map<int, std::string>			_error_page;
+		std::map<int, std::string>			_error_pages;
 
 	public:
 		enum conf_parser { // NOTE: Should probably be private, when all functions are moved into this class
@@ -44,6 +44,7 @@ class Config
 		const std::string				&get_root() const;
 		const std::string				&get_cgi() const;
 		const Location					&get_location(const std::string& key) const;
+		const std::map<std::string,Location>	&get_locations() const;
 		const std::string				&get_error_page(const int &key) const;
 
 		//setters

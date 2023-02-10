@@ -6,10 +6,13 @@
 #include "util.hpp"
 #include "Logger.hpp"
 #include <sstream>
+#include <fcntl.h>
 
-Client::Client(int client_sockfd, sockaddr_in client_address)
-	: _client_sockfd(client_sockfd), _client_address(client_address)
-{}
+Client::Client(Config &config, int client_sockfd, sockaddr_in client_address)
+	: config(config), _client_sockfd(client_sockfd), _client_address(client_address) {
+		if (fcntl(this->_client_sockfd, F_SETFL, O_NONBLOCK))
+			throw (std::runtime_error("Error setting socket to non-blocking"));
+	}
 
 // TODO: should we also remove it from the map in the Server class?
 void Client::close(void) {
@@ -40,10 +43,10 @@ bool Client::_go_to_cgi(void) const {
 
 // when the request does not include a cgi
 void Client::_file_response(void) {
-	FileResponse file_response(this->_request.path);
-	file_response.generate_response();
+	FileResponse file_response(this->config, this->_request);
 	::send(this->get_sockfd(), file_response.get_response().c_str(), file_response.get_response().size(), 0);
 	logger << Logger::info << "Response sent" << std::endl;
+	// logger << Logger::debug << file_response.get_response() << std::endl;;
 }
 
 void Client::_handle_request(std::string const &received) {
@@ -58,6 +61,7 @@ void Client::_handle_request(std::string const &received) {
 		return;
 	}
 
+	this->_request.set_location(this->config.get_locations());
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
 
 	if (!this->_request.get_script_name().empty()) {

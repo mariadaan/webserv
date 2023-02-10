@@ -4,6 +4,7 @@
 #include "Optional.hpp"
 #include "ParsedRequest.hpp"
 #include "CGI.hpp"
+#include "Config.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -15,8 +16,9 @@ class EventQueue;
 class Client
 {
 public:
-	Client() {}
-	Client(int client_sockfd, sockaddr_in client_address);
+	Client(Config &config, int client_sockfd, sockaddr_in client_address);
+
+	Config		&config;
 	int			get_sockfd(void) const;
 	void		close(void);
 	std::string	get_ip(void) const;

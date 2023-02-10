@@ -9,14 +9,19 @@ EventQueue::EventQueue() {
 		throw std::runtime_error("Error creating kqueue");
 }
 
-void EventQueue::add_server(Server &server) {
-	this->_servers[server.get_sockfd()] = server;
-	this->add_event_listener(server.get_sockfd());
+void EventQueue::add_server(Server *server) {
+	this->_servers[server->get_sockfd()] = server;
+	this->add_event_listener(server->get_sockfd());
 }
 
 void EventQueue::close_servers(void) {
-	for (std::map<int, Server>::iterator it = this->_servers.begin(); it != this->_servers.end(); it++) {
-		it->second.close();
+	for (std::map<int, Server*>::iterator it_server = this->_servers.begin(); it_server != this->_servers.end(); it_server++) {
+		// TODO: checken of de clients hier deleten wel logisch is
+		for (std::map<int, Client*>::iterator it_client = it_server->second->get_clients().begin(); it_client != it_server->second->get_clients().end(); it_client++) {
+			delete it_client->second;
+		}
+		(*(it_server->second)).close();
+		delete it_server->second;
 	}
 }
 
@@ -46,11 +51,11 @@ void EventQueue::event_loop(void) {
 		if (num_events == -1)
 			throw std::runtime_error("Error: kevent wait");
 		if (this->_servers.count(ev_rec.ident) > 0) {
-			this->accept_client_on(this->_servers.at(ev_rec.ident));
+			this->accept_client_on(*(this->_servers.at(ev_rec.ident)));
 		}
 		else {
 			logger << Logger::info << "Got event on client: " << ev_rec.ident << std::endl;
-			this->_servers.at(this->_client_server[ev_rec.ident]).get_client(ev_rec.ident).handle_event(ev_rec);
+			(*(this->_servers.at(this->_client_server[ev_rec.ident]))).get_client(ev_rec.ident).handle_event(ev_rec);
 		}
 	}
 }

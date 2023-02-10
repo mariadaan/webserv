@@ -1,1 +1,0 @@
-<!-- TODO: script maken om een file te kunnen uploaden. Mag ook in Python -->

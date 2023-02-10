@@ -25,6 +25,22 @@ ParsedRequest::ParsedRequest(std::string str) : _headers_done(false) {
 	this->parse_part(str);
 }
 
+/* Save location in ParsedRequest if the path is a location block.
+	else, do nothing and do not initialise location. */
+void ParsedRequest::set_location(std::map<std::string,Location> const &locations)
+{
+	if (method == GET) // allow GET by default
+		this->is_allowed_method = true;
+	else
+		this->is_allowed_method = false;
+
+	if (locations.count(this->path) > 0) {
+		this->location = locations.at(this->path);
+		this->location.print_location_class();
+		this->is_allowed_method = this->location.get_request_methods(this->method_string);
+	}
+}
+
 bool ParsedRequest::has_header(std::string key) const {
 	util::str_to_lower(key);
 	return (this->headers.count(key) > 0);
@@ -103,6 +119,7 @@ void ParsedRequest::parse_part(std::string part) {
 		this->_headers_done = true;
 		this->_parse_metadata();
 	}
+
 }
 
 bool ParsedRequest::_is_chunked(void) const {
@@ -128,6 +145,7 @@ void ParsedRequest::_parse_metadata() {
 		throw std::runtime_error("Invalid first line");
 	}
 	this->method = ParsedRequest::_parse_method(first_line_parts[0]);
+	this->method_string = first_line_parts[0];
 	this->path = first_line_parts[1];
 	this->http_version = first_line_parts[2];
 	lines.erase(lines.begin());

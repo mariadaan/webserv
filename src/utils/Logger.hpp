@@ -12,9 +12,10 @@ public:
 	// Logger(std::ostream &ios) : _ios(ios) {};
 
 	enum Flag {
-		info = 0,
-		warn = 1,
-		error = 2
+		debug,
+		info,
+		warn,
+		error
 	};
 
 	Logger &filter(Flag flag);

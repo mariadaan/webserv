@@ -32,6 +32,7 @@ public:
 	std::string 						body;
 	bool 								is_chunked;
 	Optional<Location>					location;
+	bool								is_allowed_method;
 
 	ParsedRequest(std::string str);
 	std::string const	&get_header(std::string key) const;

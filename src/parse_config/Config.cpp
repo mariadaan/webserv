@@ -15,7 +15,7 @@ Config::Config()
 {
 	_port = 80;
 	_max_size = 1;
-	_error_page = return_default_error_map();
+	_error_pages = return_default_error_map();
 }
 
 //No dynamically allocated memmory in the class so destructor is empty
@@ -33,7 +33,7 @@ Config& Config::operator=(Config other)
 }
 
 Config::Config(std::vector<std::string> &server_vector)
-	: _port(80), _max_size(1), _error_page(return_default_error_map())
+	: _port(80), _max_size(1), _error_pages(return_default_error_map())
 {
 	Config::conf_parser	enum_value;
 
@@ -72,8 +72,8 @@ void	Config::set_cgi(std::string &cgi) 									{_cgi = cgi;}
 void	Config::set_locations(const std::string &key, const Location &value){_locations[key] = value;}
 void	Config::set_error_page(const int &key, const std::string &value)
 {
-	if (_error_page.count(key))
-		_error_page[key] = value;
+	if (_error_pages.count(key))
+		_error_pages[key] = value;
 	else
 		std::cerr << "No error code: " << key << std::endl; 			//THROW !
 }
@@ -104,8 +104,8 @@ const std::map<std::string,Location>	&Config::get_locations() const {
 
 const std::string							&Config::get_error_page(const int &key) const
 {
-	std::map<int,std::string>::const_iterator it = _error_page.find(key);
-	if (it == _error_page.end())
+	std::map<int,std::string>::const_iterator it = _error_pages.find(key);
+	if (it == _error_pages.end())
 		std::cerr << "Error code '" << key << "' not found" << std::endl;	 //THROW!
 		//throw
 	return (it->second);
@@ -150,7 +150,7 @@ void	Config::print_config_class(void)
 		std::cout << std::endl;
 	}
 	std::cout << "\nError page :" << std::endl;
-	for (std::map<int, std::string>::const_iterator it = _error_page.begin(); it != _error_page.end(); it++)
+	for (std::map<int, std::string>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
 		std::cout << it->first << " : " << it->second << std::endl;
 	std::cout << std::endl;
 }
@@ -293,15 +293,15 @@ std::map<std::string, bool>	return_false_methods_map(void)
 std::map<int,std::string>	return_default_error_map(void)
 {
 	std::map<int,std::string> error;
-	error[400] = "default/error/400.html";
-	error[403] = "default/error/403.html";
-	error[404] = "default/error/404.html";
-	error[405] = "default/error/405.html";
-	error[413] = "default/error/413.html";
-	error[418] = "default/error/418.html";
-	error[500] = "default/error/500.html";
-	error[501] = "default/error/501.html";
-	error[505] = "default/error/505.html";
+	error[400] = "error_pages/400.html";
+	error[403] = "error_pages/403.html";
+	error[404] = "error_pages/404.html";
+	error[405] = "error_pages/405.html";
+	error[413] = "error_pages/413.html";
+	error[418] = "error_pages/418.html";
+	error[500] = "error_pages/500.html";
+	error[501] = "error_pages/501.html";
+	error[505] = "error_pages/505.html";
 	return (error);
 }
 

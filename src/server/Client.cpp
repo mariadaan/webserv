@@ -44,16 +44,14 @@ bool Client::_go_to_cgi(void) const {
 // when the request does not include a cgi
 void Client::_file_response(void) {
 	FileResponse file_response(this->config, this->_request);
-	file_response.generate_response();
 	::send(this->get_sockfd(), file_response.get_response().c_str(), file_response.get_response().size(), 0);
 	logger << Logger::info << "Response sent" << std::endl;
-	// logger << Logger::info << file_response.get_response() << std::endl;;
+	// logger << Logger::debug << file_response.get_response() << std::endl;;
 }
 
 void Client::_handle_request(std::string const &received) {
 	if (!this->_request.is_set()) {
 		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
-		this->_request.set_location(this->config.get_locations());
 	}
 	else {
 		this->_request.parse_part(received);
@@ -63,6 +61,7 @@ void Client::_handle_request(std::string const &received) {
 		return;
 	}
 
+	this->_request.set_location(this->config.get_locations());
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
 
 	if (!this->_request.get_script_name().empty()) {

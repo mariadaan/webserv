@@ -1,3 +1,4 @@
+#pragma once
 #ifndef UTIL_HPP
 # define UTIL_HPP
 
@@ -20,7 +21,7 @@ namespace util {
 	template <typename T>
 	void print(T message) {
 		std::cout << message << std::endl;
-}
+	}
 }
 
 #endif

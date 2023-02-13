@@ -1,5 +1,6 @@
+#pragma once
 #ifndef OPTIONAL_HPP
- #define OPTIONAL_HPP
+# define OPTIONAL_HPP
 
 // https://en.cppreference.com/w/cpp/utility/optional
 

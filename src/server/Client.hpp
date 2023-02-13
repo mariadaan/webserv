@@ -1,5 +1,6 @@
+#pragma once
 #ifndef CLIENT_HPP
- #define CLIENT_HPP
+# define CLIENT_HPP
 
 #include "Optional.hpp"
 #include "ParsedRequest.hpp"

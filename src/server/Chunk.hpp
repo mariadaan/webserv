@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CHUNK_HPP
 # define CHUNK_HPP
 

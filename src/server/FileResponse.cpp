@@ -1,6 +1,7 @@
 #include "FileResponse.hpp"
 #include "Logger.hpp"
 #include "util.hpp"
+#include "defines.hpp"
 
 FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
 	this->_file_dir = config.get_root() + "/";
@@ -73,7 +74,7 @@ void FileResponse::generate_response(void) {
 	this->load_page_content();
 	this->define_status();
 	this->_response_status = this->get_response_status(this->_status_code);
-	
+
 	if (this->_status_code >=400) {
 		this->_filename = this->_file_dir + this->config.get_error_page(this->_status_code);
 		this->load_page_content();

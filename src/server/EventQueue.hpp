@@ -1,5 +1,6 @@
+#pragma once
 #ifndef EVENTQUEUE_HPP
-#define EVENTQUEUE_HPP
+# define EVENTQUEUE_HPP
 
 #include <sys/types.h>
 #include <sys/event.h>

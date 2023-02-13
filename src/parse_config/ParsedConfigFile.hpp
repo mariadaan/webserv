@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PARSEDCONFIGFILE_HPP
 # define PARSEDCONFIGFILE_HPP
 
@@ -6,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <sstream> 
+#include <sstream>
 
 class ParsedConfigFile {
 public:

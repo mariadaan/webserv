@@ -1,5 +1,6 @@
 #include "Chunk.hpp"
 #include "Logger.hpp"
+#include "defines.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -18,7 +19,7 @@ std::vector<Chunk> get_chunks(std::string data) {
 	while (true) {
 		switch (state) {
 			case waiting_for_size: {
-				size_t found = data.find("\r\n");
+				size_t found = data.find(CRLF);
 				if (found == std::string::npos) {
 					save = data;
 					return (chunks);
@@ -45,7 +46,7 @@ std::vector<Chunk> get_chunks(std::string data) {
 			} break;
 
 			case waiting_for_crlf: {
-				if (data.substr(0, 2) != "\r\n") {
+				if (data.substr(0, 2) != CRLF) {
 					save = data;
 					return (chunks);
 				}
@@ -71,7 +72,7 @@ Chunks::Chunks(std::string data) {
 	while (true) {
 		ss.str("");
 		ss.clear();
-		found = data.find("\r\n", next_chunk_start);
+		found = data.find(CRLF, next_chunk_start);
 		if (found == std::string::npos)
 			break;
 		size_hex = data.substr(next_chunk_start, found - next_chunk_start);
@@ -84,7 +85,7 @@ Chunks::Chunks(std::string data) {
 		Chunk chunk(chunk_content, size);
 		this->_chunks.push_back(chunk);
 
-		next_chunk_start = data.find("\r\n", found + 2 + size);
+		next_chunk_start = data.find(CRLF, found + 2 + size);
 		if (next_chunk_start == std::string::npos)
 			break;
 		next_chunk_start += 2;

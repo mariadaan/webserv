@@ -1,6 +1,7 @@
 #include "ParsedRequest.hpp"
 #include "Logger.hpp"
 #include "util.hpp"
+#include "defines.hpp"
 #include <sstream>
 #include <algorithm>
 #include <cctype>
@@ -102,7 +103,7 @@ bool ParsedRequest::headers_finished() const {
 }
 
 void ParsedRequest::parse_part(std::string part) {
-	std::string header_delim("\r\n\r\n");
+	std::string header_delim(CRLF CRLF);
 	size_t a = part.find(header_delim);
 	this->_metadata += part.substr(0, a);
 	if (part.size() < header_delim.size()) {
@@ -139,7 +140,7 @@ bool ParsedRequest::_is_chunked(void) const {
 }
 
 void ParsedRequest::_parse_metadata() {
-	std::vector<std::string> lines = util::split_string(this->_metadata, "\r\n");
+	std::vector<std::string> lines = util::split_string(this->_metadata, CRLF);
 	std::vector<std::string> first_line_parts = util::split_string(lines[0], " ");
 	if (first_line_parts.size() != 3) {
 		throw std::runtime_error("Invalid first line");
@@ -175,7 +176,7 @@ std::map<std::string, std::string> ParsedRequest::_parse_headers(std::vector<std
 	size_t delim_length = delimiter.length();
 	for (decltype(lines)::const_iterator it = lines.cbegin(); it != lines.cend(); ++it) {
 		std::string line = *it;
-		if (line == "\r\n\r\n" || line.empty())
+		if (line == CRLF CRLF || line.empty())
 			return headers;
 		size_t delim_pos = line.find(delimiter);
 		if (delim_pos == std::string::npos) {

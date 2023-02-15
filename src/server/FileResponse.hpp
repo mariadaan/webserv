@@ -19,7 +19,6 @@ public:
 	ParsedRequest	&request;
 
 	std::string		get_response() const;
-	std::string		get_response_status(int status_code) const;
 
 private:
 	bool				can_open_file();
@@ -35,7 +34,5 @@ private:
 	std::string			_response_status;
 	std::string			_content_type;
 };
-
-std::string get_content_type(std::string file_extension);
 
 #endif

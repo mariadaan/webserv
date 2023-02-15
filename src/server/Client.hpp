@@ -6,6 +6,7 @@
 #include "ParsedRequest.hpp"
 #include "CGI.hpp"
 #include "Config.hpp"
+#include "Response.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -29,21 +30,7 @@ private:
 	int				_client_sockfd;
 	sockaddr_in		_client_address;
 
-	Optional<ParsedRequest>	_request;
-	Optional<CGI>	_cgi;
-
-	bool		_is_parsed(void) const;
-	bool		_go_to_cgi(void) const;
-
-	void		_handle_request(std::string const &received);
-	void		_handle_chunks(std::string const &received);
-	void		_handle_non_chunk(std::string const &received);
-	void		_finish_request();
-	void		_file_response();
-
-	void		_wait_for_cgi();
-
-	std::string &_get_body();
+	Response	_response;
 };
 
 #endif

@@ -23,6 +23,7 @@ class Response {
 		Client		&_client;
 
 		Config		&_config;
+		ChunkBuilder	_chunk_builder;
 		Optional<ParsedRequest>	_request;
 		Optional<CGI>	_cgi;
 		bool _ready;

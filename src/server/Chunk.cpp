@@ -4,14 +4,12 @@
 #include <iostream>
 #include <sstream>
 
-std::vector<Chunk> get_chunks(std::string data) {
-	static std::string save;
-	static enum {
-		waiting_for_size,
-		waiting_for_data,
-		waiting_for_crlf
-	} state = waiting_for_size;
-	static size_t size;
+ChunkBuilder::ChunkBuilder() : _state(ChunkBuilder::waiting_for_size) {}
+
+std::vector<Chunk> ChunkBuilder::parse(std::string data) {
+	std::string &save = this->_save;
+	ChunkBuilder::ParseState &state = this->_state;
+	size_t &size = this->_size;
 
 	std::vector<Chunk> chunks;
 

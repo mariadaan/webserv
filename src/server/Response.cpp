@@ -109,7 +109,7 @@ std::string &Response::_get_body(void) {
 
 void Response::_handle_body_chunks(std::string const &received) {
 	logger << Logger::info << "Got chunk" << std::endl;
-	std::vector<Chunk> chunks = get_chunks(received);
+	std::vector<Chunk> chunks = this->_chunk_builder.parse(received);
 	for (std::vector<Chunk>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;

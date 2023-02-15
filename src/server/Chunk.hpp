@@ -15,8 +15,6 @@ private:
 	size_t		_size;
 };
 
-std::vector<Chunk> get_chunks(std::string data); // NOTE: new function
-
 class Chunks {
 public:
 	Chunks(std::string data);
@@ -39,5 +37,19 @@ private:
 	std::vector<Chunk> _chunks;
 };
 
+class ChunkBuilder {
+	public:
+		ChunkBuilder();
+		std::vector<Chunk> parse(std::string data);
+	private:
+		std::string _save;
+		enum ParseState {
+			waiting_for_size,
+			waiting_for_data,
+			waiting_for_crlf
+		};
+		ParseState _state;
+		size_t _size;
+};
 
 #endif

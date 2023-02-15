@@ -108,7 +108,7 @@ namespace util {
 		status_codes[HTTP_OK] = "200 OK";
 		status_codes[HTTP_CREATED] = "201 Created";
 		status_codes[HTTP_NO_CONTENT] = "204 No Content";
-		// status_codes[HTTP_BAD_REQUEST] = "400 Bad Request";
+		status_codes[HTTP_BAD_REQUEST] = "400 Bad Request";
 		// status_codes[HTTP_UNAUTHORIZED] = "401 Unauthorized";
 		// status_codes[HTTP_FORBIDDEN] = "403 Forbidden";
 		status_codes[HTTP_NOT_FOUND] = "404 Not Found";

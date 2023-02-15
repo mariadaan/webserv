@@ -77,8 +77,7 @@ void Response::_handle_request() {
 	else {
 		if (!this->_request.has_header("content-length")) {
 			if (this->_get_body().size() != 0) {
-				// TODO: send 400: Bad Request
-				// this->_status_code = HTTP_BAD_REQUEST;
+				this->_status_code = HTTP_BAD_REQUEST;
 			}
 			this->_get_body() = "";
 			// this->_finish_request();

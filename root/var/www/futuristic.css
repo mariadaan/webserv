@@ -4,30 +4,25 @@ body {
     font-family: 'Arial', sans-serif;
     font-size: 1.2em;
 }
-
 h1, h2, h3 {
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
-
 h1 {
     font-size: 3em;
     margin-bottom: 0.5em;
 }
-
 p {
     line-height: 1.5em;
     margin-bottom: 1em;
 }
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
 }
-
 .box {
     background-color: #fff;
     color: #3d3d3d;
@@ -37,12 +32,10 @@ p {
     box-shadow: 0px 0px 10px 2px #3d3d3d;
     text-align: center;
 }
-
 .box h2 {
     font-size: 2em;
     margin-bottom: 0.5em;
 }
-
 .box p {
     font-size: 1.1em;
     margin-bottom: 0;

@@ -1,26 +1,84 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" type="text/css" href="style.css">
-  <title>webserv</title>
-</head>
-<body>
-  <h1>Welcome to MPM!</h1>
-  <p>Learn more about webserver and everything that has something to do with them:</p>
-  <a href="webserver.html"><button>What is a web server?</button></a>
-  <a href="http_basics.html"><button>What is HTTP?</button></a>
-  <a href="terminal.html"><button>What does a terminal look like?</button></a>
-  <a href="various_content.html"><button>Test some different types of content</button></a>
-  <a href="upload"><button>Test File Upload</button></a>
-  <a href="blablabla"><button>Button that brings you nowhere</button></a>
-  <h1>Test unallowed request method</h1>
-    <form action="root/usr/lib/cgi-bin/upload.py" method="post" enctype="multipart/form-data">
-        <input type="file" name="fileToUpload">
-        <input type="submit" value="Upload File">
-      </form>
-  </body>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webserver</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="hero">
+      <div class="navbar">
+        <a href="https://www.codam.nl" target="_blank"
+          ><img src="others/images/logo.png" class="logo" alt="logo"
+        /></a>
+				<a href="https://github.com/mariadaan/webserv" target="_blank" class="bn_git bn_git1">Github Page</a>
+      </div>
+			<div class="content">
+        <small>Welcome to our</small>
+        <h1>Web</h1>
+				<h2>Server</h2>
+      </div>
+      <div class="side_bar">
+        <img src="others/images/menu.png" alt="menu" class="menu" />
 
-</html>
-</body>
+        <div class="social-links">
+          <img src="others/images/fb.png" />
+          <img src="others/images/ig.png" />
+          <img src="others/images/tw.png" />
+        </div>
+
+        <div class="useful-links">
+          <img src="others/images/share.png" />
+          <img src="others/images/info.png" />
+        </div>
+      </div>
+		<div class="surf_boards">
+			<div class="board">
+				<a href="webserver.html">
+					<img src="others/images/board3.png" class="bn37">
+				</a>
+				<a href="webserver.html" class="bn3637 bn36">What is a<br>web server?</a>
+			</div>
+			<div class="board">
+				<a href="http_basics.html">
+					<img src="others/images/board4.png" class="bn37">
+				</a>
+				<a href="http_basics.html" class="bn3637 bn36">What is<br>HTTP?</a>
+			</div>
+			<div class="board">
+				<a href="terminal.html">
+					<img src="others/images/board5.png" class="bn37">
+				</a>
+				<a href="terminal.html" class="bn3637 bn36">What does<br>a terminal<br>look like?</a>
+			</div>
+			<div class="board">
+				<a href="upload">
+					<img src="others/images/board3.png" class="bn37">
+				</a>
+				<a href="upload" class="bn3637 bn36">Upload<br>a file</a>
+			</div>
+			<div class="board">
+				<a href="bubbels.html">
+					<img src="others/images/board6.png" class="bn37">
+				</a>
+				<a href="bubbels.html" class="bn3637 bn36">Button that <br>brings you <br>nowhere</a>
+			</div>
+			<!-- <div class="board">
+				<a href="nope">
+					<img src="others/images/board6.png" class="bn37">
+				</a>
+				<a href="does_not_exist" class="bn3637 bn36">Button that <br>brings you <br>nowhere</a>
+			</div> -->
+		</div>
+		<div class="image_container">
+			<img src="others/images/sand1.png" alt="Image1">
+			<img src="others/images/sand2.png" alt="Image2">
+			<img src="others/images/sand3.png" alt="Image3">
+			<img src="others/images/sand4.png" alt="Image4">
+		</div>
+		<img src="others/images/birds.gif" class="birds">
+    </div>
+  </body>
 </html>

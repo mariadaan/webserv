@@ -3,12 +3,10 @@ body {
     background-color: #000;
     color: #fff;
 }
-
 pre {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
-
 .terminal {
     width: 80%;
     margin: auto;
@@ -17,12 +15,10 @@ pre {
     border-radius: 10px;
     overflow: auto;
 }
-
 .terminal::before {
     content: "> WEBSERV";
     color: #00ff00;
 }
-
 .terminal::after {
     content: " ";
     display: block;

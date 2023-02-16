@@ -1,25 +1,15 @@
+#pragma once
 #ifndef PARSEDREQUEST_HPP
 # define PARSEDREQUEST_HPP
 
 #include "Location.hpp"
 #include "Optional.hpp"
+#include "enums.hpp"
 #include <vector>
 #include <map>
 #include <string>
 #include <iostream>
 
-enum Method {
-	GET,
-	POST,
-	PUT,
-	DELETE,
-	HEAD,
-	CONNECT,
-	OPTIONS,
-	TRACE,
-	PATCH,
-	UNKNOWN
-};
 std::ostream &operator<<(std::ostream &os, const Method &req);
 
 class ParsedRequest {
@@ -43,7 +33,7 @@ public:
 	size_t 				get_content_length() const;
 	bool 				headers_finished() const;
 	void 				parse_part(std::string part);
-	void				set_location(std::map<std::string,Location> const &locations);
+	void				set_location(std::map<std::string, Location> const &locations);
 
 protected:
 	ParsedRequest() {};

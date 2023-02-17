@@ -9,10 +9,8 @@ void	ParsedConfigFile::parse_config(char const *conf_filename)
 	std::vector<std::string> lines;
 	lines = file_to_lines(conf_filename);
 
-	if (!check_brackets(lines)) {
-		std::cerr << "Found non matching bracket(s) in '" << conf_filename << "' file" << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	if (!check_brackets(lines))
+		throw std::runtime_error("Found non matching bracket(s) in '" + (std::string)conf_filename + "' file");
 	std::vector<std::vector<std::string> >	server_vector;
 	server_vector = create_server_vector(lines);
 	this->server_blocks = set_config_vector(server_vector);
@@ -38,10 +36,8 @@ std::vector<Config>	set_config_vector(std::vector<std::vector<std::string> > &se
 const std::vector<std::string>	file_to_lines(const std::string &file_name)
 {
 	std::ifstream	config_file(file_name);
-	if (!config_file) {
-		std::cerr << "Cannot open file: " << file_name << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	if (!config_file)
+		throw std::runtime_error( "Cannot open file: " + file_name);
 	std::vector<std::string>	conf_vector;
 	std::string	line;
 	while (getline(config_file, line))
@@ -92,10 +88,8 @@ std::vector<std::vector<std::string> >	create_server_vector(const std::vector<st
 		server_vector.push_back(server_block);
 		server_block = find_server_block(file);
 	}
-	if (server_vector.empty()){
-		std::cerr << "No server block found in the provided file" << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	if (server_vector.empty())
+		throw std::runtime_error("No server block found in the provided file");
 	return (server_vector);
 }
 
@@ -125,10 +119,8 @@ std::vector<std::string>	find_server_block(const std::vector<std::string> &vec)
 			break ;
 		}
 	}
-	if (found == 0 && server_count == 0){
-		std::cerr << "No server block found in the provided file" << std::endl;
-		exit (EXIT_FAILURE);
-	}
+	if (found == 0 && server_count == 0)
+		throw std::runtime_error("No server block found in the provided file");
 	if (found == 0)
 		return (std::vector<std::string>());
 	for (size_t line = begin; line <= end; line++)

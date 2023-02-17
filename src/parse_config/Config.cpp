@@ -197,7 +197,7 @@ unsigned int	string_to_unsigned(std::string &word)
 	for (size_t i = 0; i < word.length(); i++)
 	{
 		if (!isdigit(word[i]))
-			return (0);
+			throw std::runtime_error("No integer value where int is expected in config file");
 	}
 	return (std::stoul(word));
 }
@@ -257,20 +257,14 @@ void	value_to_error(Config &object, std::string &line)
 	int					error_code;
 
 	error_code_string = get_second_word(line);
-	if (error_code_string.empty()){
-		std::cerr << "No error code provided in config file" << std::endl;
-		exit(EXIT_FAILURE) ;
-	}
+	if (error_code_string.empty())
+		throw std::runtime_error("No error code provided in config file");
 	error_code = stoi(error_code_string);
-	if (error_code == 0){
-		std::cerr << "No correct error code provided in config file" << std::endl;
-		exit(EXIT_FAILURE) ;
-	}
+	if (error_code == 0)
+		throw std::runtime_error("No correct error code provided in config file");
 	value = get_third_word(line);
-	if (value.empty()){
-		std::cerr << "No error page provided for error code '" << error_code << "' in config file" << std::endl;
-		exit(EXIT_FAILURE) ;
-	}
+	if (value.empty())
+		throw std::runtime_error("No error page provided for error code '" + std::to_string(error_code) + "' in config file");
 	object.set_error_page(error_code, value);
 }
 

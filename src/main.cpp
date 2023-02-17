@@ -20,31 +20,34 @@ int main(int argc, char *argv[]) {
 		config_filename = "root/conf/server.conf";
 	else
 		config_filename = argv[1];
-	ParsedConfigFile config(config_filename.c_str());
 	logger << Logger::info << "Parsed config file: " << config_filename << std::endl;
+	try {
+		ParsedConfigFile config(config_filename.c_str());
+		EventQueue keventQueue;
+		for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {
+			try {
+				Server *serverSocket = new Server(*it, PF_INET, SOCK_STREAM, 0);
+				logger << Logger::info << "Starting server on port " << (*it).get_port() << std::endl;
 
-	EventQueue keventQueue;
-	for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {
+				serverSocket->set_address();
+				serverSocket->bind();
+				serverSocket->listen(BACKLOG);
+
+				logger << Logger::info << "Listening on port " << (*it).get_port() << ": http://localhost:" << (*it).get_port() << std::endl;
+
+				keventQueue.add_server(serverSocket);
+			}
+			catch(const std::exception& e) {
+				logger << Logger::error << e.what() << std::endl;
+			}
+		}
 		try {
-			Server *serverSocket = new Server(*it, PF_INET, SOCK_STREAM, 0);
-			logger << Logger::info << "Starting server on port " << (*it).get_port() << std::endl;
-
-			serverSocket->set_address();
-			serverSocket->bind();
-			serverSocket->listen(BACKLOG);
-
-			logger << Logger::info << "Listening on port " << (*it).get_port() << ": http://localhost:" << (*it).get_port() << std::endl;
-
-			keventQueue.add_server(serverSocket);
+			keventQueue.event_loop();
+			keventQueue.close_servers();
 		}
 		catch(const std::exception& e) {
 			logger << Logger::error << e.what() << std::endl;
 		}
-	}
-
-	try {
-		keventQueue.event_loop();
-		keventQueue.close_servers();
 	}
 	catch(const std::exception& e) {
 		logger << Logger::error << e.what() << std::endl;

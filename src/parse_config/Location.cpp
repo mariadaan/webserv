@@ -30,7 +30,7 @@ Location::Location(std::vector<std::string> &location_body)
 			if (second == "ON")
 				_auto_index = true;
 		}
-		else if (word == "upload" || word == "index"){
+		else if (word == "upload" || word == "index" || word == "root"){
 			std::string second = get_second_word(location_body[i]);
 			if (second.empty())
 				continue ;
@@ -38,6 +38,8 @@ Location::Location(std::vector<std::string> &location_body)
 				_upload = second;
 			else if (word == "index")
 				_index = second;
+			else if (word == "root")
+				_root = second;
 		}
 		else if (word == "request_method")
 		{
@@ -49,6 +51,13 @@ Location::Location(std::vector<std::string> &location_body)
 				if (_request_methods.count(name))
 					_request_methods[name] = true;
 			}
+		}
+		else if (word == "client_max_body_size"){
+			std::string	second = get_second_word(location_body[i]);
+			if (second.empty())
+				continue ;
+			unsigned int	value = string_to_unsigned(second);
+			_max_size = value;
 		}
 	}
 }
@@ -79,4 +88,6 @@ void	Location::print_location_class(void)
 	for (std::map<std::string,bool>::const_iterator it = _request_methods.begin(); it != _request_methods.end(); it++)
 		std::cout << it->first << " : " << it->second << std::endl;
 	std::cout << "upload : " << this->get_upload() << std::endl;
+	std::cout << "root : " << _root << std::endl;
+	std::cout << "maxBody : " << std::to_string(_max_size);
 }

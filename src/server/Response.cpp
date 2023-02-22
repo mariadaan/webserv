@@ -27,7 +27,7 @@ bool Response::_go_to_cgi(void) const {
 void Response::_send_file_response(void) {
 	FileResponse file_response(this->_config, this->_request);
 	std::string response = file_response.get_response();
-	::send(this->_client.get_sockfd(), response.c_str(), response.size(), 0);
+	this->_client.send(response);
 	logger << Logger::info << "Response sent" << std::endl;
 	// logger << Logger::debug << response << std::endl;;
 }
@@ -67,7 +67,7 @@ void Response::_handle_request() {
 
 	if (this->_request.has_header("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
 		std::string response = "HTTP/1.1 " + util::get_response_status(HTTP_CONTINUE) + CRLF + CRLF;
-		::send(this->_client.get_sockfd(), response.c_str(), response.size(), 0);
+		this->_client.send(response);
 		logger << Logger::info << "response sent" << std::endl;
 	}
 
@@ -195,11 +195,11 @@ void Response::_send_error_response() {
 	}
 
 	std::string content_type_header = "Content-Type: " + content_type + CRLF;
-	::send(this->_client.get_sockfd(), content_type_header.c_str(), content_type_header.size(), 0);
+	this->_client.send(content_type_header);
 	std::string header_end = CRLF;
-	::send(this->_client.get_sockfd(), header_end.c_str(), header_end.size(), 0);
+	this->_client.send(header_end);
 
-	::send(this->_client.get_sockfd(), page_content.c_str(), page_content.size(), 0);
+	this->_client.send(page_content);
 
 	logger << Logger::debug << "Sent error response" << std::endl;
 }
@@ -207,7 +207,7 @@ void Response::_send_error_response() {
 void Response::_send_status(HTTP_STATUS_CODES status_code) {
 	std::string status = util::get_response_status(status_code);
 	std::string response = "HTTP/1.1 " + status + CRLF;
-	::send(this->_client.get_sockfd(), response.c_str(), response.size(), 0);
+	this->_client.send(response);
 }
 
 void Response::_send_status() {

@@ -22,7 +22,8 @@ public:
 	void add_server(Server *server);
 	void close_servers(void);
 
-	void add_event_listener(int sockfd);
+	void add_read_event_listener(int sockfd);
+	void add_write_event_listener(int sockfd);
 	void event_loop(void);
 
 	void accept_client_on(Server &server);

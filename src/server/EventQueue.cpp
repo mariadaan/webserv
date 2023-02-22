@@ -29,7 +29,7 @@ void EventQueue::close_servers(void) {
 void EventQueue::add_read_event_listener(int sockfd) {
 	struct kevent kev;
 
-	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev, sockfd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	int ret = ::kevent(this->_kq, &kev, 1, NULL, 0, NULL);
 	if (ret == -1) {
 		::close(sockfd);
@@ -44,7 +44,7 @@ void EventQueue::add_read_event_listener(int sockfd) {
 void EventQueue::add_write_event_listener(int sockfd) {
 	struct kevent kev;
 
-	EV_SET(&kev, sockfd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev, sockfd, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, NULL);
 	int ret = ::kevent(this->_kq, &kev, 1, NULL, 0, NULL);
 	if (ret == -1) {
 		::close(sockfd);

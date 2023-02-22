@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <dirent.h>
 
 class FileResponse {
 public:
@@ -26,6 +27,7 @@ private:
 	void				define_status();
 	void				define_content_type();
 	void				generate_response();
+	void				directory_listing();
 	std::string			_file_dir;
 	std::string			_filename;
 	bool				_file_accessible;

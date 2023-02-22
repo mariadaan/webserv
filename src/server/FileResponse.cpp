@@ -60,7 +60,35 @@ void FileResponse::define_content_type(void) {
 	}
 }
 
+void FileResponse::directory_listing(void) {
+	DIR* dir = opendir(this->_filename.c_str());
+	if (dir == nullptr) {
+		throw std::runtime_error("Error opening directory");
+	}
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != nullptr) {
+		// Ignore . and .. directories
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+			continue;
+		}
+		std::string filename(entry->d_name);
+		if (entry->d_type == DT_DIR) {
+			this->_page_content += "<li><a href='" + filename + "/'>" + filename + "/ </a></li>" + CRLF;
+		} else {
+			this->_page_content += "<li><a href='" + filename + "'>" + filename + " </a></li>" + CRLF;
+		}
+	}
+	closedir(dir);
+}
+
 void FileResponse::generate_response(void) {
+	if (this->request.location.get_index().empty() && this->request.location.get_auto_index()) {
+		logger << Logger::debug << "autoindexing" << std::endl;
+		this->_response_status = HTTP_OK;
+		this->_content_type = "text/html";
+		this->directory_listing();
+		return ;
+	}
 	this->load_page_content();
 	this->define_status();
 	this->_response_status = util::get_response_status(this->_status_code);

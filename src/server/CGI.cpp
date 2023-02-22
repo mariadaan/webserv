@@ -60,7 +60,7 @@ std::vector<char *> CGI::_get_argv() const {
 	return converted_argv;
 }
 
-void CGI::write(const void *buf, size_t count) {
+void CGI::write(const void *buf, size_t count) { // TODO: How does this interact with non-blocking write?
 	::write(this->_pipe_fd[1], buf, count);
 }
 

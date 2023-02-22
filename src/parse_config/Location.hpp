@@ -9,8 +9,10 @@ class Location
 {
 	private:
 		std::string					_index;
+		std::string					_root;
 		std::map<std::string, bool>	_request_methods;
 		std::string					_upload;
+		unsigned int				_max_size;
 		bool						_auto_index;
 
 	public:

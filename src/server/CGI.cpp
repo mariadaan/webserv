@@ -1,5 +1,6 @@
 #include "CGI.hpp"
 #include "Client.hpp"
+#include "Logger.hpp"
 #include <unistd.h>
 #include <vector>
 #include <cstring>
@@ -46,7 +47,7 @@ std::vector<char *> CGI::_get_envp() const {
 
 std::vector<char *> CGI::_get_argv() const {
 	std::vector<std::string> argv;
-	argv.push_back("./root/usr/lib/cgi-bin/cgi_test.py");
+	argv.push_back(this->_env.at("SCRIPT_NAME").c_str());
 
 	std::vector<char *> converted_argv;
 	for (decltype(argv)::const_iterator it = argv.begin(); it != argv.end(); ++it) {
@@ -79,7 +80,8 @@ void CGI::_start(Client &client) {
 			throw std::runtime_error("dup2() failed");
 		if (::dup2(client.get_sockfd(), STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		::execve("./root/usr/lib/cgi-bin/cgi_test.py", this->_get_argv().data(), this->_get_envp().data());
+		logger << Logger::debug << "SCRIPT_NAME: " << this->_env.at("SCRIPT_NAME") << std::endl;
+		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
 }

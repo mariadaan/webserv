@@ -60,7 +60,6 @@ Config::Config(std::vector<std::string> &server_vector)
 	}
 }
 
-
 // ---------------------------------- SETTERS -----------------------------------------
 
 
@@ -114,12 +113,18 @@ const std::string							&Config::get_error_page(const int &key) const
 // -------------------------------- OTHER FUNCTIONS -------------------------------------
 
 
-
 void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string &line)
 {
+	unsigned	int value;
 
-	if (enum_value == LISTEN || enum_value == MAX_SIZE)
-		value_to_unsigned(*this, line, enum_value);
+	if (enum_value == LISTEN){
+		value = value_to_unsigned(line, false);
+		this->set_port(value);
+	}
+	else if (enum_value == MAX_SIZE){
+		value = value_to_unsigned(line, true);
+		this->set_max_size(value);
+	}
 	else if (enum_value == ROOT || enum_value == CGI)
 		value_to_string(*this, line, enum_value);
 	else if (enum_value == SERVER_NAME)
@@ -127,7 +132,6 @@ void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string 
 	else if (enum_value == ERROR_PAGE)
 		value_to_error(*this, line);
 }
-
 
 //prints out a Config class
 void	Config::print_config_class(void)
@@ -191,9 +195,11 @@ std::vector<std::string>	return_location_body(std::vector<std::string> &server_v
 
 
 //converts string to unsigned int
-//if input is not only digits 0 is returned
+//if input is not only digits exception is trown
 unsigned int	string_to_unsigned(std::string &word)
 {
+	if (word.empty())
+		throw std::runtime_error("No integer value where int is expected in config file");
 	for (size_t i = 0; i < word.length(); i++)
 	{
 		if (!isdigit(word[i]))
@@ -202,22 +208,36 @@ unsigned int	string_to_unsigned(std::string &word)
 	return (std::stoul(word));
 }
 
-
 //If a second word is found it is converted to an unsigned int (if possible)
 //If yes: the unsigned is set either to the 'port' value or 'max_body_size'
-void	value_to_unsigned(Config &object, std::string &line, Config::conf_parser &enum_value)
+//if maxBody is true, k & K for kilo and m & M for mega
+//For the maxBody : 2m or 2M gets converted to 2000000 (Mega byte)
+//For the maxBody : 2k or 2K gets converted to 2000    (kilo byte)
+unsigned int	value_to_unsigned(std::string &line, bool maxBody)
 {
+	bool	Mega = false;
+	bool	kilo = false;
 	std::string		word = get_second_word(line);
-	unsigned int	value = string_to_unsigned(word);
-	if (value != 0)
-	{
-		if (enum_value == Config::LISTEN)
-			object.set_port(value);
-		else if (enum_value == Config::MAX_SIZE)
-			object.set_max_size(value);
-	}
-}
 
+	if (!word.empty() && maxBody == true){
+		if (word.back() == 'M' || word.back() == 'm'){
+			Mega = true;
+			word.pop_back();
+		}
+		else if (word.back() == 'K' || word.back() == 'k'){
+			kilo = true;
+			word.pop_back();
+		}
+	}
+	unsigned int	value = string_to_unsigned(word);
+	if (maxBody == true){
+		if (Mega == true)
+			value *= 1000000;
+		else if (kilo == true)
+			value *= 1000;
+	}
+	return (value);
+}
 
 //When 'server names' is found this function is used to search all names and puts them in a string vector
 void	value_to_string_vector(Config &object, std::string &line)
@@ -233,7 +253,6 @@ void	value_to_string_vector(Config &object, std::string &line)
 		return ;
 	object.set_server_names(server_names);
 }
-
 
 //sets the value for root and cgi if a second word is encountered
 void	value_to_string(Config &object, std::string &line, Config::conf_parser &enum_value)
@@ -270,18 +289,23 @@ void	value_to_error(Config &object, std::string &line)
 
 
 //Creates a map<string,bool> for the methods map in the Location class
-//All the values are iniated to be false at first
-std::map<std::string, bool>	return_false_methods_map(void)
+//All the values are iniated to be true at first
+std::map<std::string, bool>	return_true_methods_map(void)
 {
 	std::map<std::string, bool>	methods;
-	methods["GET"] = false;
-	methods["POST"] = false;
-	methods["DELETE"] = false;
-	methods["PUT"] = false;
-	methods["PATCH"] = false;
+	methods["GET"] = true;
+	methods["POST"] = true;
+	methods["DELETE"] = true;
+	methods["PUT"] = true;
+	methods["PATCH"] = true;
 	return (methods);
 }
 
+void	set_methods_map_false(std::map<std::string, bool>& methods) {
+    for (std::map<std::string, bool>::iterator it = methods.begin(); it != methods.end(); ++it) {
+        it->second = false;
+    }
+}
 
 //Creates a map<int,string> where all error codes are set to default path
 std::map<int,std::string>	return_default_error_map(void)

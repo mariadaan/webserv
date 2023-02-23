@@ -26,13 +26,12 @@ private:
 
 	Response _response;
 
-	bool _can_write;
 	bool _want_to_write;
-
-	// enum {
-	// 	READY_TO_WRITE,
-	// 	WANT_TO_WRITE
-	// } 			_write_state;
+	enum {
+		CANNOT_WRITE,
+		CAN_WRITE,
+		WRITE_EOF
+	}	_write_state;
 	enum {
 		OPEN,
 		WANT_TO_CLOSE,

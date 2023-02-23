@@ -2,6 +2,7 @@
 #ifndef PARSEDREQUEST_HPP
 # define PARSEDREQUEST_HPP
 
+#include "Config.hpp"
 #include "Location.hpp"
 #include "Optional.hpp"
 #include "enums.hpp"
@@ -24,7 +25,7 @@ public:
 	Optional<Location>					location;
 	bool								is_allowed_method;
 
-	ParsedRequest(std::string str);
+	ParsedRequest(Config &config, std::string str);
 	std::string const	&get_header(std::string key) const;
 	bool 				has_header(std::string key) const;
 	std::string 		get_query_string() const;
@@ -33,12 +34,12 @@ public:
 	size_t 				get_content_length() const;
 	bool 				headers_finished() const;
 	void 				parse_part(std::string part);
-	void				set_location(std::map<std::string, Location> const &locations);
 
 protected:
 	ParsedRequest() {};
 
 private:
+	Config	*_config;
 	static Method _parse_method(std::string method_str);
 	static std::map<std::string, std::string> _parse_headers(std::vector<std::string> lines);
 	bool _is_chunked(void) const;

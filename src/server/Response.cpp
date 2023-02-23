@@ -39,7 +39,7 @@ void Response::_send_file_response(void) {
 
 void Response::_build_request(std::string const &received) {
 	if (!this->_request.is_set()) {
-		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+		this->_request = Optional<ParsedRequest>(ParsedRequest(this->_config, received));
 	}
 	else {
 		this->_request.parse_part(received);
@@ -51,8 +51,6 @@ std::string Response::_get_status() {
 }
 
 void Response::_handle_request() {
-	this->_request.set_location(this->_config.get_locations());
-
 	if (!this->_request.is_allowed_method) {
 		logger << Logger::info << "Method not allowed" << std::endl;
 

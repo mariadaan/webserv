@@ -90,12 +90,25 @@ const std::string							&Config::get_root() const 		{return (_root);}
 const std::string							&Config::get_cgi() const 		{return (_cgi);}
 const Location								&Config::get_location(const std::string& key) const
 {
-	return (this->_locations.at(key));
-	//  std::map<std::string,Location>::const_iterator it = _locations.find(key);
-	// if (it == _locations.end())
-	// 	std::cerr << "Location: '" << key << "' not found" << std::endl; 		//THROW!
-	// 	// throw std::out_of_range("Location not found");
-	// return (it->second);
+	std::string longest_match;
+	for (std::map<std::string, Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); it++) {
+		std::string location_path = it->first;
+		if (location_path == key)
+			return it->second;
+		std::string longest = longest_match;
+		if (location_path.back() != '/')
+			location_path += '/';
+		if (longest.back() != '/')
+			longest += '/';
+		if (location_path.length() < longest.length())
+			continue ;
+		if (key.substr(0, location_path.length()) == location_path)
+			longest_match = it->first;
+	}
+	if (longest_match == "")
+		std::cerr << "Location: '" << key << "' not found" << std::endl; 		//THROW!
+	std::cout << "Matched location: " << longest_match << std::endl;
+	return this->_locations.at(longest_match);
 }
 
 const std::map<std::string,Location>	&Config::get_locations() const {

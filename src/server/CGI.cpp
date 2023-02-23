@@ -12,8 +12,8 @@ CGI::CGI(ParsedRequest const& request, Client &client) {
 
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
 	this->_env["AUTH_TYPE"] = request.get_auth_scheme();
-	// this->_env["CONTENT_LENGTH"] = request.get_content_length(); // NOTE: if and only if request has a body
-	// this->_env["CONTENT_TYPE"] = request.get_content_type(); // // NOTE: if and only if request has a body
+	this->_env["CONTENT_LENGTH"] = request.get_header("content-length"); // NOTE: if and only if request has a body
+	this->_env["CONTENT_TYPE"] = request.get_header("content-type"); // // NOTE: if and only if request has a body
 	this->_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	// this->_env["PATH_INFO"] = request.get_path(); // NOTE: check workings with CGI on wikipedia
 	// this->_env["PATH_TRANSLATED"] = ???;

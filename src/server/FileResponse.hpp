@@ -26,11 +26,13 @@ private:
 	void				load_page_content();
 	void				define_status();
 	void				define_content_type();
+	void				define_auto_index();
 	void				generate_response();
 	void				directory_listing();
 	std::string			_file_dir;
 	std::string			_filename;
 	bool				_file_accessible;
+	bool				_auto_indexing;
 	HTTP_STATUS_CODES	_status_code;
 	std::string			_page_content;
 	std::string			_response_status;

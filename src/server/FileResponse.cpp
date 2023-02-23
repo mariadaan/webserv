@@ -6,12 +6,24 @@
 FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
 	this->_file_dir = config.get_root() + "/";
 	this->_filename = this->_file_dir + this->request.path;
-	if (this->request.location.is_set())
-		this->_filename = this->_file_dir + this->request.location.get_index();
+	logger << Logger::debug << "Filename: " << this->_filename << std::endl;
+	std::string index_file = this->_filename + "/" + this->request.location.get_index();
+	logger << Logger::debug << "index file: " << index_file << std::endl;
+	if (this->request.location.is_set() && !this->request.location.get_index().empty() && util::can_open_file(index_file)) {
+		this->_filename = index_file;
+	}
 	else
 		this->_filename = this->_file_dir + this->request.path;
+	this->define_auto_index();
 	this->generate_response();
-	logger << Logger::debug << "filename: " << this->_filename << std::endl;
+	logger << Logger::debug << "Filename: " << this->_filename << std::endl;
+}
+
+void FileResponse::define_auto_index(void) {
+	if (this->request.location.is_set() && this->request.location.get_auto_index() && (this->request.location.get_index().empty() || (!this->request.location.get_index().empty() && !util::can_open_file(this->_file_dir + this->request.location.get_index()))))
+		this->_auto_indexing = true;
+	else
+		this->_auto_indexing = false;
 }
 
 bool FileResponse::can_open_file() {
@@ -60,7 +72,39 @@ void FileResponse::define_content_type(void) {
 	}
 }
 
+void FileResponse::directory_listing(void) {
+	DIR* dir = opendir(this->_filename.c_str());
+	if (dir == nullptr) {
+		throw std::runtime_error("Error opening directory: " + this->_filename);
+	}
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != nullptr) {
+		// Ignore . and .. directories
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+			continue;
+		}
+		std::string filename(entry->d_name);
+		if (entry->d_type == DT_DIR) {
+			this->_page_content += "<li><a href='" + filename + "/'>" + filename + "/ </a></li>" + CRLF;
+		} else {
+			this->_page_content += "<li><a href='" + filename + "'>" + filename + " </a></li>" + CRLF;
+		}
+	}
+	closedir(dir);
+}
+
 void FileResponse::generate_response(void) {
+	if (this->_auto_indexing) {
+		this->_response_status = HTTP_OK;
+		this->_content_type = "text/html";
+		try {
+			this->directory_listing();
+			return ;
+		}
+		catch(const std::exception& e) {
+			logger << Logger::warn << e.what() << std::endl;
+		}
+	}
 	this->load_page_content();
 	this->define_status();
 	this->_response_status = util::get_response_status(this->_status_code);

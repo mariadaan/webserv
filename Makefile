@@ -6,7 +6,7 @@
 #    By: mvan-wij <mvan-wij@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2023/01/12 14:40:00 by mvan-wij      #+#    #+#                  #
-#    Updated: 2023/01/25 14:15:13 by mdaan         ########   odam.nl          #
+#    Updated: 2023/02/22 18:29:39 by mvan-wij      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,14 +46,6 @@ OBJDIR := obj
 OBJECTS := $(addprefix $(OBJDIR)/, $(SOURCES:cpp=o))
 INCLUDE_FLAGS += $(addprefix -I, $(sort $(dir $(HEADERS))))
 
-export CFLAGS := $(sort $(CFLAGS))
-
-DATA_FILE := .make_data.txt
-MAKE_DATA := $(shell uname) $(CFLAGS) $(INCLUDE_FLAGS) $(sort $(OBJECTS))
-ifneq ($(shell echo $(MAKE_DATA)), $(shell cat "$(DATA_FILE)" 2> /dev/null))
-PRE_RULES := clean
-endif
-
 ################################################################################
 
 BLUE_FG := \e[34m
@@ -66,19 +58,20 @@ exec_no_nl = printf "$(1)$(CLEAR_REST_OF_LINE)\n"; $(1); printf "\e[A"
 
 ################################################################################
 
-all: $(PRE_RULES) $(NAME)
+all: $(NAME)
 
 $(NAME): $(OBJECTS)
 	@$(call print_prefix,"$(PROJECT)","make")
 	$(CC) $(CFLAGS) $(OBJECTS) -o $(NAME)
 	@$(call print_prefix,"$(PROJECT)","make")
 	@printf "$(BLUE_FG)$(NAME)$(RESET_COLOR) created\n"
-	@echo $(MAKE_DATA) > $(DATA_FILE)
 
-$(OBJDIR)/%.o: %.cpp $(HEADERS)
+-include $(OBJECTS:.o=.d)
+
+$(OBJDIR)/%.o: %.cpp Makefile
 	@mkdir -p $(@D)
 	@$(call print_prefix,"$(PROJECT)","make")
-	@$(call exec_no_nl,$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@)
+	@$(call exec_no_nl,$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -MMD -MP -c $< -o $@)
 
 debug:
 	@$(MAKE) DEBUG=1

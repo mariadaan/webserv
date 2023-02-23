@@ -1,8 +1,10 @@
 *
 !*/
 !root/**
+root/**/.DS_Store
 !testing/request_examples/**
 !*.[cht]pp
 !README.md
 !.gitignore
 !Makefile
+!.clang-format

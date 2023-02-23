@@ -26,11 +26,17 @@ class Response {
 		ChunkBuilder	_chunk_builder;
 		Optional<ParsedRequest>	_request;
 		Optional<CGI>	_cgi;
-		bool _ready;
+		enum {
+			PARSING,
+			READY,
+			SENT
+		} _ready;
 
 		size_t		_body_size;
 
 		HTTP_STATUS_CODES	_status_code;
+
+		void		_mark_ready(void);
 
 		bool		_headers_parsed(void) const;
 		bool		_go_to_cgi(void) const;

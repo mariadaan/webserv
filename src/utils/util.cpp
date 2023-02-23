@@ -68,6 +68,7 @@ namespace util {
 		file_extension_to_content_type["mp3"] = "audio/mpeg";
 		file_extension_to_content_type["mp4"] = "video/mp4";
 		file_extension_to_content_type["html"] = "text/html";
+		file_extension_to_content_type["php"] = "text/html";
 		file_extension_to_content_type["css"] = "text/css";
 		file_extension_to_content_type["js"] = "application/javascript";
 		file_extension_to_content_type["json"] = "application/json";

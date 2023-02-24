@@ -56,7 +56,6 @@ class Config
 		void	set_cgi(std::string &cgi);
 		void	set_locations(const std::string &key, const Location &value);
 		void	set_error_page(const int &key, const std::string &value);
-
 		void	call_keyword_function(conf_parser &enumValue, std::string &line);
 		void	print_config_class();
 };
@@ -64,11 +63,12 @@ class Config
 Config::conf_parser						determine_if_keyword(const std::string &word);
 std::vector<std::string>				return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end);
 unsigned int							string_to_unsigned(std::string &word);
-void									value_to_unsigned(Config &object, std::string &line, Config::conf_parser &enum_value);
+unsigned int							value_to_unsigned(std::string &line, bool maxBody);
 void									value_to_string_vector(Config &object, std::string &line);
 void									value_to_string(Config &object, std::string &line, Config::conf_parser &enum_value);
 void									value_to_error(Config &object, std::string &line);
-std::map<std::string, bool>				return_false_methods_map(void);
+std::map<std::string, bool>				return_true_methods_map(void);
+void									set_methods_map_false(std::map<std::string, bool>& methods);
 std::map<int,std::string>				return_default_error_map(void);
 std::string								get_third_word(std::string &line);
 std::string								get_second_word(std::string &line);

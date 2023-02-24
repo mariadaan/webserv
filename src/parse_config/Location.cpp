@@ -13,12 +13,12 @@
 Location::~Location(){}
 
 Location::Location()
-	: _request_methods(return_false_methods_map()), _auto_index(false)
+	: _request_methods(return_true_methods_map()), _auto_index(false)
 {
 }
 
 Location::Location(std::vector<std::string> &location_body)
-	: _request_methods(return_false_methods_map()), _auto_index(false)
+	: _request_methods(return_true_methods_map()), _auto_index(false)
 {
 	for (size_t i = 0; i < location_body.size(); i++)
 	{
@@ -41,27 +41,36 @@ Location::Location(std::vector<std::string> &location_body)
 			else if (word == "root")
 				_root = second;
 		}
-		else if (word == "request_method")
-		{
+		else if (word == "request_method"){
+			bool 				map_turned_to_false = false;
 			std::stringstream	ss(location_body[i]);
 			std::string			name;
 			ss >> name;
-			while (ss >> name)
-			{
-				if (_request_methods.count(name))
+			while (ss >> name){
+				if (_request_methods.count(name)){
+					if (map_turned_to_false == false){
+						set_methods_map_false(_request_methods);
+						map_turned_to_false = true;
+					}
 					_request_methods[name] = true;
+				}
 			}
 		}
 		else if (word == "client_max_body_size"){
 			std::string	second = get_second_word(location_body[i]);
 			if (second.empty())
 				continue ;
-			unsigned int	value = string_to_unsigned(second);
-			_max_size = value;
+			_max_size = value_to_unsigned(location_body[i], true);
+		}
+		//DIT NOG AANPASSEN WAT IS EEN BEETJE OMSLAGTIG OM MET OPTIONAL CLASS TE DOEN
+		else if (word == "redirect"){
+			std::string	second = get_second_word(location_body[i]);
+			if (second.empty() || this->_redirect.is_set())
+				continue ;
+			this->_redirect = Optional<std::string>(std::string(second));
 		}
 	}
 }
-
 
 // ----------------------------------------- GETTERS ----------------------------------------------
 

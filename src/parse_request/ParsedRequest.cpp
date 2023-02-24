@@ -47,12 +47,15 @@ std::string ParsedRequest::get_query_string() const {
 
 std::string ParsedRequest::get_script_name() const {
 	std::string script_name;
-	size_t found = this->path.find("/cgi-bin/");
-	if (found == std::string::npos) {
-		return "";
+	try {
+		if (util::get_file_extension(this->path) == "py")
+			script_name = "./root/usr/lib/cgi-bin" + this->path;
+		else
+			script_name = "";
 	}
-	script_name = this->path.substr(found);
-	script_name = script_name.substr(0, script_name.find(".py") + 3);
+	catch(const std::exception& e) {
+		script_name = "";
+	}
 	return script_name;
 }
 

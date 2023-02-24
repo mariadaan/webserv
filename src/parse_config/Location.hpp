@@ -14,7 +14,7 @@ class Location
 		std::string					_upload;
 		unsigned int				_max_size;
 		bool						_auto_index;
-		Optional<std::string>		_redirect;
+		std::string					_redirect;
 
 	public:
 		//constructors
@@ -25,6 +25,7 @@ class Location
 		//getters
 		const std::string					&get_index() const;
 		const std::string					&get_upload() const;
+		const std::string					&get_redirect() const;
 		bool								get_request_methods(const std::string &key) const;
 		bool							 	get_auto_index() const;
 

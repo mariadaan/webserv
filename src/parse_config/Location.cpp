@@ -65,9 +65,9 @@ Location::Location(std::vector<std::string> &location_body)
 		//DIT NOG AANPASSEN WAT IS EEN BEETJE OMSLAGTIG OM MET OPTIONAL CLASS TE DOEN
 		else if (word == "redirect"){
 			std::string	second = get_second_word(location_body[i]);
-			if (second.empty() || this->_redirect.is_set())
+			if (second.empty() || !this->_redirect.empty())
 				continue ;
-			this->_redirect = Optional<std::string>(std::string(second));
+			this->_redirect = std::string(second);
 		}
 	}
 }
@@ -76,6 +76,7 @@ Location::Location(std::vector<std::string> &location_body)
 
 const std::string					&Location::get_index() const 			{return (_index);}
 const std::string					&Location::get_upload() const 			{return (_upload);}
+const std::string					&Location::get_redirect() const 			{return (_redirect);}
 bool							 	Location::get_auto_index() const 		{return (_auto_index);}
 bool								Location::get_request_methods(const std::string &key) const
 {
@@ -98,5 +99,5 @@ void	Location::print_location_class(void)
 		std::cout << it->first << " : " << it->second << std::endl;
 	std::cout << "upload : " << this->get_upload() << std::endl;
 	std::cout << "root : " << _root << std::endl;
-	std::cout << "maxBody : " << std::to_string(_max_size);
+	std::cout << "maxBody : " << std::to_string(_max_size) << std::endl << std::endl;
 }

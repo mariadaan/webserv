@@ -128,7 +128,6 @@ std::vector<std::string>	find_server_block(const std::vector<std::string> &vec)
 	return (server_block);
 }
 
-
 //Searches on which line number the closing bracket '}' is found
 //'OpenBrackets' count is used for the server block because location also has open brackets
 size_t	find_closing_bracket(const std::vector<std::string> &vec, size_t line)

@@ -1,9 +1,9 @@
 #pragma once
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
-
 #include <map>
 #include <iostream>
+#include "Optional.hpp"
 
 class Location
 {
@@ -14,6 +14,7 @@ class Location
 		std::string					_upload;
 		unsigned int				_max_size;
 		bool						_auto_index;
+		Optional<std::string>		_redirect;
 
 	public:
 		//constructors
@@ -31,3 +32,13 @@ class Location
 };
 
 #endif
+
+
+// void Response::_build_request(std::string const &received) {
+// 	if (!this->_request.is_set()) {
+// 		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+// 	}
+// 	else {
+// 		this->_request.parse_part(received);
+// 	}
+// }

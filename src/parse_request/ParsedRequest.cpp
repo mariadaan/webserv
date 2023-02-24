@@ -22,24 +22,8 @@ std::ostream &operator<<(std::ostream &os, const Method &method) {
 	return os;
 }
 
-ParsedRequest::ParsedRequest(std::string str) : _headers_done(false) {
+ParsedRequest::ParsedRequest(Config &config, std::string str) : _config(&config), _headers_done(false) {
 	this->parse_part(str);
-}
-
-/* Save location in ParsedRequest if the path is a location block.
-	else, do nothing and do not initialise location. */
-void ParsedRequest::set_location(std::map<std::string,Location> const &locations)
-{
-	if (method == GET) // allow GET by default
-		this->is_allowed_method = true;
-	else
-		this->is_allowed_method = false;
-
-	if (locations.count(this->path) > 0) {
-		this->location = locations.at(this->path);
-		this->location.print_location_class();
-		this->is_allowed_method = this->location.get_request_methods(this->method_string);
-	}
 }
 
 bool ParsedRequest::has_header(std::string key) const {
@@ -152,6 +136,16 @@ void ParsedRequest::_parse_metadata() {
 	lines.erase(lines.begin());
 	this->headers = ParsedRequest::_parse_headers(lines);
 	this->is_chunked = this->_is_chunked();
+	try {
+		Location location = this->_config->get_location(this->path);
+		this->location = location;
+		this->location.print_location_class();
+		this->is_allowed_method = this->location.get_request_methods(this->method_string);
+	}
+	catch(const std::exception& e) {
+		logger << Logger::error << e.what() << '\n';
+	}
+	
 }
 
 Method ParsedRequest::_parse_method(std::string method_str) {

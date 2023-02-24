@@ -12,7 +12,12 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-Response::Response(Config &config, Client &client) : _client(client), _config(config), _ready(false), _status_code(HTTP_OK) {
+Response::Response(Config &config, Client &client) : _client(client), _config(config), _ready(PARSING), _status_code(HTTP_OK) {
+}
+
+void Response::_mark_ready(void) {
+	if (this->_ready == PARSING)
+		this->_ready = READY;
 }
 
 bool Response::_headers_parsed(void) const {
@@ -34,7 +39,7 @@ void Response::_send_file_response(void) {
 
 void Response::_build_request(std::string const &received) {
 	if (!this->_request.is_set()) {
-		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
+		this->_request = Optional<ParsedRequest>(ParsedRequest(this->_config, received));
 	}
 	else {
 		this->_request.parse_part(received);
@@ -46,14 +51,12 @@ std::string Response::_get_status() {
 }
 
 void Response::_handle_request() {
-	this->_request.set_location(this->_config.get_locations());
-
 	if (!this->_request.is_allowed_method) {
 		logger << Logger::info << "Method not allowed" << std::endl;
 
 		this->_status_code = HTTP_METHOD_NOT_ALLOWED;
-		this->_ready = true;
-		return;
+		// this->_mark_ready();
+		// return;
 	}
 
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
@@ -81,12 +84,12 @@ void Response::_handle_request() {
 			}
 			this->_get_body() = "";
 			// this->_finish_request();
-			this->_ready = true;
+			this->_mark_ready(); // TODO: does this need to be here?
 		}
 		else {
 			if (this->_get_body().size() == this->_request.get_content_length()) {
 				// this->_finish_request();
-				this->_ready = true;
+				this->_mark_ready();
 			}
 		}
 	}
@@ -113,7 +116,7 @@ void Response::_handle_body_chunks(std::string const &received) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;
 			// this->_finish_request();
-			this->_ready = true;
+			this->_mark_ready();
 			return ;
 		}
 
@@ -133,7 +136,7 @@ void Response::_handle_body(std::string const &received) {
 
 	if (this->_body_size >= this->_request.get_content_length()) {
 		receive_size = received.size() - (this->_body_size - this->_request.get_content_length());
-		this->_ready = true;
+		this->_mark_ready();
 	}
 
 	if (this->_go_to_cgi()) {
@@ -167,6 +170,9 @@ void Response::_handle_body(std::string const &received) {
 }
 
 void Response::handle_part(std::string const &received) {
+	// if (this->_ready == SENT) {
+	// 	return ;
+	// }
 	if (!this->_headers_parsed()) {
 		this->_build_request(received);
 		if (this->_headers_parsed()) {
@@ -215,6 +221,10 @@ void Response::_send_status() {
 }
 
 void Response::send() {
+	if (this->_ready == SENT) {
+		return ;
+	}
+	this->_ready = SENT;
 	if (this->has_error_status()) {
 		logger << Logger::info << "Sending error response" << std::endl;
 		this->_send_error_response();
@@ -234,7 +244,7 @@ void Response::send() {
 }
 
 bool Response::is_ready() const {
-	return this->_ready;
+	return (this->_ready == READY);
 }
 
 bool Response::has_error_status() const {

@@ -9,8 +9,8 @@ Client::Client(Config& config, int client_sockfd, sockaddr_in client_address)
 	, _client_sockfd(client_sockfd)
 	, _client_address(client_address)
 	, _response(config, *this)
-	, _can_write(false)
 	, _want_to_write(false)
+	, _write_state(CANNOT_WRITE)
 	, _close_state(OPEN) {
 	if (::fcntl(this->_client_sockfd, F_SETFL, O_NONBLOCK))
 		throw(std::runtime_error("Error setting socket to non-blocking"));
@@ -48,7 +48,7 @@ void Client::_send_part() {
 	if (size_sent == -1) {
 		throw std::runtime_error("Error writing to socket");
 	}
-	this->_can_write = false;
+	this->_write_state = CANNOT_WRITE;
 	if ((size_t)size_sent == size) {
 		this->_write_buffer = "";
 		this->_want_to_write = false;
@@ -59,7 +59,12 @@ void Client::_send_part() {
 }
 
 void Client::_handle_state() {
-	if (!this->_can_write)
+	if (this->_write_state == WRITE_EOF && this->_close_state != CLOSED){
+		::close(this->_client_sockfd);
+		this->_close_state = CLOSED;
+	}
+
+	if (this->_write_state != CAN_WRITE)
 		return;
 
 	if (this->_want_to_write) {
@@ -98,7 +103,14 @@ void Client::_handle_read_event(struct kevent& ev_rec) {
 }
 
 void Client::_handle_write_event(struct kevent& ev_rec) {
-	this->_can_write = true;
+	if (ev_rec.flags & EV_EOF) {
+		logger << Logger::info << "WRITE EOF" << std::endl;
+		this->_write_state = WRITE_EOF;
+		this->close();
+		this->_handle_state();
+		return ;
+	}
+	this->_write_state = CAN_WRITE;
 	this->_handle_state();
 }
 

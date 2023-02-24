@@ -24,6 +24,7 @@ class Location
 
 		//getters
 		const std::string					&get_index() const;
+		const std::string					&get_root() const;
 		const std::string					&get_upload() const;
 		const std::string					&get_redirect() const;
 		bool								get_request_methods(const std::string &key) const;

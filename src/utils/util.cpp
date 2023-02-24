@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include <sys/stat.h>
 
 namespace util {
 	std::vector<std::string> split_string(std::string const &str, std::string const &delim) {
@@ -34,6 +35,32 @@ namespace util {
 		else {
 			return false;
 		}
+	}
+
+	bool is_file(const char* filename)
+	{
+		// try to open the file
+		FILE* file = fopen(filename, "r");
+
+		// if fopen returns NULL, the file does not exist or cannot be opened
+		if (file == NULL) {
+			return false;
+		}
+
+		// check if the file is actually a directory
+		struct stat st;
+		if (stat(filename, &st) != 0) {
+			// stat failed, so we assume the file is not a directory
+			fclose(file);
+			return true;
+		}
+
+		bool isdir = S_ISDIR(st.st_mode);
+
+		fclose(file);
+
+		// return true if the file is not a directory
+		return !isdir;
 	}
 
 	std::string file_to_str(std::string const &filename) {

@@ -15,6 +15,7 @@ namespace util {
 	unsigned char char_to_lower(char c);
 	void str_to_lower(std::string &str);
 	bool can_open_file(const std::string& filename);
+	bool is_file(const char* filename);
 	std::string file_to_str(std::string const &filename);
 	std::string get_file_extension(std::string filename);
 	std::string get_content_type(std::string file_extension);

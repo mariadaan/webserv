@@ -7,7 +7,7 @@
 
 CGI::CGI(ParsedRequest const& request, Client &client) {
 	this->_init_env(request, client);
-	this->_start(client);
+	this->_start();
 }
 
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
@@ -62,11 +62,13 @@ std::vector<char *> CGI::_get_argv() const {
 }
 
 void CGI::write(const void *buf, size_t count) { // TODO: How does this interact with non-blocking write?
-	::write(this->_pipe_fd[1], buf, count);
+	::write(this->_pipe_fd_input[1], buf, count);
 }
 
-void CGI::_start(Client &client) {
-	if (::pipe(this->_pipe_fd) == -1)
+void CGI::_start() {
+	if (::pipe(this->_pipe_fd_input) == -1)
+		throw std::runtime_error("pipe() failed");
+	if (::pipe(this->_pipe_fd_output) == -1)
 		throw std::runtime_error("pipe() failed");
 
 	this->_pid = ::fork();
@@ -75,20 +77,31 @@ void CGI::_start(Client &client) {
 	}
 
 	if (this->_pid == 0) {
-		::close(this->_pipe_fd[1]);
-		if (::dup2(this->_pipe_fd[0], STDIN_FILENO) == -1)
+		::close(this->_pipe_fd_input[1]);
+		::close(this->_pipe_fd_output[0]);
+		if (::dup2(this->_pipe_fd_input[0], STDIN_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		if (::dup2(client.get_sockfd(), STDOUT_FILENO) == -1)
+		if (::dup2(this->_pipe_fd_output[1], STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
 		logger << Logger::debug << "SCRIPT_NAME: " << this->_env.at("SCRIPT_NAME") << std::endl;
 		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
+	::close(this->_pipe_fd_input[0]);
+	::close(this->_pipe_fd_output[1]);
 }
 
-void CGI::wait() {
-	::close(this->_pipe_fd[0]);
-	::close(this->_pipe_fd[1]);
+// TODO: This is blocking, which is not good. See issue #35
+std::string CGI::wait() {
+	::close(this->_pipe_fd_input[1]);
 	int status;
 	::waitpid(this->_pid, &status, 0); // NOTE: this hangs the entire process, thus no other clients can be served
+	char buffer[1024];
+	std::string res;
+	int r;
+	while ((r = ::read(this->_pipe_fd_output[0], buffer, sizeof(buffer))) > 0) {
+		res.append(buffer, r);
+	}
+	::close(this->_pipe_fd_output[0]);
+	return res;
 }

@@ -32,9 +32,9 @@ class Response {
 			SENT
 		} _ready;
 
-		size_t		_body_size;
-
 		HTTP_STATUS_CODES	_status_code;
+
+		size_t		_body_size;
 
 		void		_mark_ready(void);
 

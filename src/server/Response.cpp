@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-Response::Response(Config &config, Client &client) : _client(client), _config(config), _ready(PARSING), _status_code(HTTP_OK) {
+Response::Response(Config &config, Client &client) : _client(client), _config(config), _ready(PARSING), _status_code(HTTP_OK), _body_size(0) {
 }
 
 void Response::_mark_ready(void) {
@@ -87,9 +87,10 @@ void Response::_handle_request() {
 			this->_mark_ready(); // TODO: does this need to be here?
 		}
 		else {
-			if (this->_get_body().size() == this->_request.get_content_length()) {
-				// this->_finish_request();
-				this->_mark_ready();
+			if (this->_get_body().size() != 0) {
+				std::string body = this->_get_body();
+				this->_get_body() = "";
+				this->_handle_body(body);
 			}
 		}
 	}
@@ -99,7 +100,8 @@ void Response::_wait_for_cgi() {
 	this->_send_status(); // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
 	// std::string response = "HTTP/1.1 200 OK" CRLF; // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
 	// ::send(this->_client.get_sockfd(), response.c_str(), response.size(), 0);
-	this->_cgi.wait(); // currently also closes the write end of the pipe
+	std::string response = this->_cgi.wait(); // currently also closes the write end of the pipe
+	this->_client.send(response);
 }
 
 std::string &Response::_get_body(void) {

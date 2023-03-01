@@ -11,7 +11,8 @@ Client::Client(Config& config, int client_sockfd, sockaddr_in client_address)
 	, _response(config, *this)
 	, _want_to_write(false)
 	, _write_state(CANNOT_WRITE)
-	, _close_state(OPEN) {
+	, _close_state(OPEN)
+	, _write_buffer("") {
 	if (::fcntl(this->_client_sockfd, F_SETFL, O_NONBLOCK))
 		throw(std::runtime_error("Error setting socket to non-blocking"));
 }
@@ -23,7 +24,7 @@ void Client::close(void) {
 
 void Client::send(std::string const& str) {
 	if (this->_close_state != OPEN) {
-		throw std::runtime_error("Client: Trying to write to a closed client");
+		throw std::logic_error("Client: Trying to write to a closed client");
 	}
 	this->_want_to_write = true;
 	this->_write_buffer += str;
@@ -64,12 +65,11 @@ void Client::_handle_state() {
 		this->_close_state = CLOSED;
 	}
 
-	if (this->_write_state != CAN_WRITE)
-		return;
-
 	if (this->_want_to_write) {
+		if (this->_write_state != CAN_WRITE)
+			return;
 		if (this->_close_state == CLOSED) {
-			throw std::runtime_error("Client: Trying to write to a closed client");
+			throw std::logic_error("Client: Trying to write to a closed client");
 		}
 		this->_send_part();
 	}
@@ -81,23 +81,27 @@ void Client::_handle_state() {
 	}
 }
 
-void Client::_handle_read_event(struct kevent& ev_rec) {
+void Client::_handle_read_event(struct kevent& ev_rec, EventQueue& event_queue) {
 	if (ev_rec.flags & EV_EOF) {
 		logger << Logger::info << "Client disconnected: " << this->get_sockfd()
 			   << std::endl;
-		this->close();
+		::close(this->get_sockfd());
+		this->_close_state = CLOSED;
 	}
 	else {
 		size_t		bytes_available = ev_rec.data;
 		char*		buffer = new char[bytes_available];
-		int			bytes_read = recv(this->get_sockfd(), buffer, bytes_available, 0);
+		int			bytes_read = ::recv(this->get_sockfd(), buffer, bytes_available, 0);
 		std::string received(buffer, bytes_read);
 		delete[] buffer;
 
 		this->_response.handle_part(received);
+		if (this->_response.should_add_cgi_to_event_queue()) {
+			this->_response.add_cgi_to_event_queue(event_queue);
+		}
 		if (this->_response.is_ready()) {
-			this->_response.send();
-			this->close();
+			if (this->_response.send())
+				this->close();
 		}
 	}
 }
@@ -114,9 +118,9 @@ void Client::_handle_write_event(struct kevent& ev_rec) {
 	this->_handle_state();
 }
 
-void Client::handle_event(struct kevent& ev_rec) {
+void Client::handle_event(struct kevent& ev_rec, EventQueue& event_queue) {
 	if (ev_rec.filter == EVFILT_READ) {
-		this->_handle_read_event(ev_rec);
+		this->_handle_read_event(ev_rec, event_queue);
 	}
 	else if (ev_rec.filter == EVFILT_WRITE) {
 		this->_handle_write_event(ev_rec);
@@ -125,4 +129,8 @@ void Client::handle_event(struct kevent& ev_rec) {
 		// logger << Logger::error << "Unknown event filter: " << ev_rec.filter << std::endl;
 		throw std::runtime_error("Client: Unknown event filter");
 	}
+}
+
+void Client::handle_cgi_event(struct kevent& ev_rec) {
+	this->_response.handle_cgi_event(ev_rec);
 }

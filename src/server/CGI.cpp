@@ -10,6 +10,10 @@ CGI::CGI(ParsedRequest const& request, Client &client) {
 	this->_start();
 }
 
+int CGI::get_output_fd() const {
+	return this->_pipe_fd_output[0];
+}
+
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
 	this->_env["AUTH_TYPE"] = request.get_auth_scheme();
 	this->_env["CONTENT_LENGTH"] = request.get_header("content-length"); // NOTE: if and only if request has a body
@@ -91,17 +95,12 @@ void CGI::_start() {
 	::close(this->_pipe_fd_output[1]);
 }
 
-// TODO: This is blocking, which is not good. See issue #35
-std::string CGI::wait() {
+void CGI::end_of_input() {
 	::close(this->_pipe_fd_input[1]);
+}
+
+void CGI::wait() {
+	::close(this->_pipe_fd_output[0]);
 	int status;
 	::waitpid(this->_pid, &status, 0); // NOTE: this hangs the entire process, thus no other clients can be served
-	char buffer[1024];
-	std::string res;
-	int r;
-	while ((r = ::read(this->_pipe_fd_output[0], buffer, sizeof(buffer))) > 0) {
-		res.append(buffer, r);
-	}
-	::close(this->_pipe_fd_output[0]);
-	return res;
 }

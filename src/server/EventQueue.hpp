@@ -12,8 +12,7 @@
 
 #include <map>
 
-#include "Server.hpp"
-
+class Server;
 class EventQueue
 {
 public:
@@ -24,6 +23,7 @@ public:
 
 	void add_read_event_listener(int sockfd);
 	void add_write_event_listener(int sockfd);
+	void add_cgi_event_listener(int cgi_fd, int client_sockfd);
 	void event_loop(void);
 
 	void accept_client_on(Server &server);
@@ -33,6 +33,7 @@ private:
 	int _kq;
 	std::map<int, Server *> _servers;
 	std::map<int, int> _client_server;
+	std::map<int, int> _cgi_client;
 };
 
 #endif

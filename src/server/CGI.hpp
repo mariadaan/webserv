@@ -13,7 +13,9 @@ class CGI {
 public:
 	CGI(ParsedRequest const& request, Client& client);
 	void write(const void *buf, size_t count);
-	std::string wait();
+	void end_of_input();
+	void wait();
+	int get_output_fd() const;
 
 protected:
 	CGI() {};

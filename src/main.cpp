@@ -14,6 +14,8 @@ const int BACKLOG = 5;
 Logger logger;
 
 int main(int argc, char *argv[]) {
+	logger << std::boolalpha;
+
 	std::string config_filename;
 
 	if (argc < 2)

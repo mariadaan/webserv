@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <sys/event.h>
 
+class EventQueue;
 class Client {
 public:
 	Client(Config& config, int client_sockfd, sockaddr_in client_address);
@@ -16,8 +17,8 @@ public:
 	int			get_sockfd(void) const;
 	void		close(void);
 	std::string get_ip(void) const;
-	void		handle_event(struct kevent& ev_rec);
-
+	void		handle_event(struct kevent& ev_rec, EventQueue& event_queue);
+	void		handle_cgi_event(struct kevent& ev_rec);
 	void		send(std::string const& str);
 
 private:
@@ -41,7 +42,7 @@ private:
 
 	void _send_part();
 	void _handle_state();
-	void _handle_read_event(struct kevent& ev_rec);
+	void _handle_read_event(struct kevent& ev_rec, EventQueue& event_queue);
 	void _handle_write_event(struct kevent& ev_rec);
 };
 

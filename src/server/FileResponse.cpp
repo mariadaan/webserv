@@ -5,6 +5,10 @@
 
 FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
 	this->_file_dir = config.get_root() + "/";
+	if (this->request.location.is_set() && !this->request.location.get_root().empty()) {
+		logger << Logger::warn << "Different root found: " << this->request.location.get_root() << std::endl;
+		this->_file_dir = this->request.location.get_root() + "/";
+	}
 	this->_filename = this->_file_dir + this->request.path;
 	logger << Logger::debug << "Filename: " << this->_filename << std::endl;
 	std::string index_file = this->_filename + "/" + this->request.location.get_index();
@@ -12,9 +16,6 @@ FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(conf
 	if (this->request.location.is_set() && !this->request.location.get_index().empty() && util::can_open_file(index_file)) {
 		this->_filename = index_file;
 	}
-	// else if (this->request.location.is_set() && !this->request.location.get_redirect().empty()) {
-	// 	this->_filename = this->_file_dir + this->request.location.get_redirect();
-	// }
 	else
 		this->_filename = this->_file_dir + this->request.path;
 	this->define_auto_index();
@@ -30,7 +31,7 @@ void FileResponse::define_auto_index(void) {
 }
 
 bool FileResponse::can_open_file() {
-	bool can_open = util::can_open_file(this->_filename);
+	bool can_open = util::is_file(this->_filename.c_str());
 	if (!can_open) {
 		logger << Logger::warn << "Could not open " << this->_filename << std::endl;
 	}
@@ -126,6 +127,7 @@ void FileResponse::generate_response(void) {
 		return ;
 	}
 	if (this->_status_code >= 400) {
+		this->_file_dir = config.get_root() + "/";
 		this->_filename = this->_file_dir + this->config.get_error_page(this->_status_code);
 		this->load_page_content();
 	}
@@ -134,8 +136,6 @@ void FileResponse::generate_response(void) {
 
 std::string FileResponse::get_response(void) const {
 	std::string response = this->request.http_version + " " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
-	// if (this->_status_code == HTTP_MOVED_PERMANENTLY) {
-	// 	std::cout << "\nResponse: \n" << response << "\n\n";
-	// }
+	logger << Logger::info << "Response sent with status code " << this->_response_status << std::endl;
 	return response;
 }

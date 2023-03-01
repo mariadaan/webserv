@@ -76,6 +76,7 @@ Location::Location(std::vector<std::string> &location_body)
 
 const std::string					&Location::get_index() const 			{return (_index);}
 const std::string					&Location::get_upload() const 			{return (_upload);}
+const std::string					&Location::get_root() const 			{return (_root);}
 const std::string					&Location::get_redirect() const 			{return (_redirect);}
 bool							 	Location::get_auto_index() const 		{return (_auto_index);}
 bool								Location::get_request_methods(const std::string &key) const

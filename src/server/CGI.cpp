@@ -15,23 +15,35 @@ int CGI::get_output_fd() const {
 }
 
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
-	this->_env["AUTH_TYPE"] = request.get_auth_scheme();
-	this->_env["CONTENT_LENGTH"] = request.get_header("content-length"); // NOTE: if and only if request has a body
-	this->_env["CONTENT_TYPE"] = request.get_header("content-type"); // // NOTE: if and only if request has a body
-	this->_env["GATEWAY_INTERFACE"] = "CGI/1.1";
-	// this->_env["PATH_INFO"] = request.get_path(); // NOTE: check workings with CGI on wikipedia
-	// this->_env["PATH_TRANSLATED"] = ???;
-	this->_env["QUERY_STRING"] = request.get_query_string();
-	this->_env["REMOTE_ADDR"] = client.get_ip(); //
-	// this->_env["REMOTE_HOST"] = request.get_remote_host(); //
-	this->_env["REMOTE_IDENT"] = ""; // NOTE: does not need to be implemented
-	// this->_env["REMOTE_USER"] = request.get_remote_user(); //
-	this->_env["REQUEST_METHOD"] = request.method_string;
-	this->_env["SCRIPT_NAME"] = request.get_script_name();
-	// this->_env["SERVER_NAME"] = config.get_server_name();
-	// this->_env["SERVER_PORT"] = config.get_server_port();
-	this->_env["SERVER_PROTOCOL"] = request.http_version;
-	this->_env["SERVER_SOFTWARE"] = "Webserv/1.0";
+	try {
+		this->_env["AUTH_TYPE"] = request.get_auth_scheme();
+		if (request.has_header("content-length")) {
+			this->_env["CONTENT_LENGTH"] = request.get_header("content-length"); // NOTE: if and only if request has a body
+		}
+		if (request.has_header("content-type")) {
+			this->_env["CONTENT_TYPE"] = request.get_header("content-type"); // // NOTE: if and only if request has a body
+		}
+		this->_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+		this->_env["PATH_INFO"] = request.get_script_name();
+		this->_env["PATH_TRANSLATED"] = request.get_script_name();
+		this->_env["QUERY_STRING"] = request.get_query_string();
+		this->_env["REMOTE_ADDR"] = client.get_ip(); //
+		this->_env["REMOTE_HOST"] =  client.get_ip();
+		this->_env["REMOTE_IDENT"] = ""; // NOTE: does not need to be implemented
+		this->_env["REQUEST_METHOD"] = request.method_string;
+		this->_env["SCRIPT_NAME"] = request.get_script_name();
+		this->_env["SERVER_NAME"] = client.config.get_server_names()[0]; // TODO: zorgen dat server_name altijd set is, default instellen als het niet in de config file staat
+		this->_env["SERVER_PORT"] = std::to_string(client.config.get_port());
+		this->_env["SERVER_PROTOCOL"] = request.http_version;
+		this->_env["SERVER_SOFTWARE"] = "Webserv/1.0";
+		if (request.location.is_set()) {
+			this->_env["UPLOAD_PATH"] = client.config.get_root() + request.location.get_upload();
+		}
+	}
+	catch(const std::exception& e) {
+		logger << Logger::error << "Error setting environment variables for CGI: " << e.what() << std::endl;
+	}
+	
 }
 
 std::vector<char *> CGI::_get_envp() const {
@@ -87,7 +99,6 @@ void CGI::_start() {
 			throw std::runtime_error("dup2() failed");
 		if (::dup2(this->_pipe_fd_output[1], STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		logger << Logger::debug << "SCRIPT_NAME: " << this->_env.at("SCRIPT_NAME") << std::endl;
 		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}

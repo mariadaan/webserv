@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 Client::Client(Config& config, Server& server, int client_sockfd, sockaddr_in client_address)
-	: _config(config)
+	: config(config)
 	, _server(server)
 	, _client_sockfd(client_sockfd)
 	, _client_address(client_address)

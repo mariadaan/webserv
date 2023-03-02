@@ -1,26 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>File upload</title>
-  </head>
-  <body>
+	<head>
+		<title>File upload</title>
+	</head>
 
-<h1>Try to upload a file here:</h1>
-    <form action="upload_file.py" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload File">
-      </form>
-  </body>
-  <head>
-    <script>
-      function deleteFiles() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("DELETE", "/uploads", true);
-        xhr.send();
-      }
-    </script>
-  </head>
-  <body>
-    <button onclick="deleteFiles()">Delete Uploaded Files</button>
-  </body>
+<body>
+<h1>What are the CGI's environment variables?</h1>
+<h3><i>Test GET request</i></h3>
+<form action = "print_cgi_envs.py" method = "get">
+	<input type = "submit" value = "Let's see!" />
+</form>
+
+<h1>What is my name in reverse?</h1>
+<h3><i>Test GET request</i></h3>
+	<form action = "get_name.py" method = "get">
+		First Name: <input type="text" name="first_name">  <br />
+		Last Name: <input type="text" name="last_name" />
+		<input type = "submit" value = "Submit" />
+	</form>
+<h1>Try to upload a file here</h1>
+<h3><i>Test POST request</i></h3>
+	<form action="upload_file.py" method="post" enctype="multipart/form-data">
+		<input type="file" name="file">
+		<input type="submit" value="Upload File">
+	</form>
+<h3><i>Test DELETE request</i></h3>
+	<script>
+	  function deleteFiles() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("DELETE", "/uploads", true);
+		xhr.addEventListener('readystatechange', () => {
+			if (xhr.status == 200) {
+				document.body.innerHTML = xhr.response;
+			}
+		})
+		xhr.send();
+	  }
+	</script>
+	<button onclick="deleteFiles()">Delete Uploaded Files</button>
+</body>
 </html>

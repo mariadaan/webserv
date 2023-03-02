@@ -48,14 +48,14 @@ std::string ParsedRequest::get_query_string() const {
 std::string ParsedRequest::get_script_name() const {
 	std::string script_name;
 	try {
-		if (util::get_file_extension(this->path) == "py")
+		size_t found_pos = this->path.find(".py?");
+		if (found_pos != std::string::npos) {
+			script_name = "./root/usr/lib/cgi-bin" + this->path.substr(0, found_pos + 3);
+		}
+		else if (util::get_file_extension(this->path) == "py")
 			script_name = "./root/usr/lib/cgi-bin" + this->path;
-		else
-			script_name = "";
 	}
-	catch(const std::exception& e) {
-		script_name = "";
-	}
+	catch(const std::exception& e) {}
 	return script_name;
 }
 
@@ -199,7 +199,7 @@ std::ostream &operator<<(std::ostream &os, const ParsedRequest &req) {
 		os << "Body is chunked, not stored here" << std::endl;
 	else {
 		os << std::endl;
-		os << "Body: -----|" << req.body << "|-----" << std::endl;
+		os << "Body: \n" << req.body << std::endl;
 	}
 	return os;
 }

@@ -4,69 +4,44 @@ import cgi
 import os
 import sys
 
-print('Content-type: text/plaintext', end='\r\n')
-print('', end='\r\n')
-for key in os.environ:
-	print(f'{key}={os.environ[key]}')
-
-for line in sys.stdin: # WAAROM WERKT DIT SOMS??
-	print(f'{line[:-1]}', end='\r\n')
-
-UPLOAD_DIRECTORY = "./root/var/www/uploads/"
-
-print("Content-Type: text/html\n")
-
-# os.environ['wsgi.input'].seek(0)
+print("Content-type: text/html", end="\r\n\r\n")
 
 # Get the data from the form
 form = cgi.FieldStorage()
 
-# Loop through each field in the form and print its value
-for field in form.keys():
-	print(field)
-	value = form[field].value
-	print(f"{field}: {value}")
+ctype, pdict = cgi.parse_header(os.environ["CONTENT_TYPE"])
+if "boundary" in pdict:
+	pdict["boundary"] = pdict["boundary"].encode()
 
-# Check if the form contains a file upload
-if 'file' in form:
-	# Get the file object
-	fileitem = form['file']
+cgi.parse_multipart(sys.stdin, pdict)
 
-	# Check if the file was successfully uploaded
-	if fileitem.filename:
-		# Get the file name
-		filename = fileitem.filename
-
-		# Get the file contents
-		filecontents = fileitem.file.read()
-
-		# Process the file contents
-		# ...
-
-	else:
-		print('No file was uploaded.')
-
+if "UPLOAD_PATH" in os.environ:
+	UPLOAD_DIRECTORY = os.environ["UPLOAD_PATH"]
 else:
-	print('No file upload in the request.')
+	UPLOAD_DIRECTORY = "./root/var/www/uploads"
 
+# Create directory if it does not exist
+dir_exists = os.path.exists(UPLOAD_DIRECTORY)
+if not dir_exists:
+	os.makedirs(UPLOAD_DIRECTORY)
 
-print("hallo?")
+if "file" in form:
+	# Get the file from the form
+	file_item = form["file"]
 
+	if file_item.filename:
+		# The file was uploaded
+		filename = file_item.filename
+		filepath = os.path.join(UPLOAD_DIRECTORY, filename)
+		open(filepath, "wb").write(file_item.file.read())
 
-# # Get the file from the form
-# file_item = form["filename"]
-
-# if file_item.filename:
-#	 # The file was uploaded
-#	 filename = file_item.filename
-#	 filepath = os.path.join(UPLOAD_DIRECTORY, filename)
-#	 open(filepath, "wb").write(file_item.file.read())
-
-#	 print("<html><body>")
-#	 print(f"<p>File {filename} uploaded successfully!</p>")
-#	 print("</body></html>")
-# else:
-#	 # The file was not uploaded
-#	 print("<html><body>")
-#	 print("<p>Error: no file was uploaded</p>")
-#	 print("</body></html>")
+		print("<html><body>")
+		print(f"<p>File {filename} uploaded to {UPLOAD_DIRECTORY} successfully!</p>")
+		print("</body></html>")
+	else:
+		# The file was not uploaded
+		print("<html><body>")
+		print("<p>Error: no file was uploaded</p>")
+		print("</body></html>")
+else:
+	print("No file")

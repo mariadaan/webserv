@@ -229,8 +229,6 @@ void Response::_send_error_response() {
 	this->_client.send(header_end);
 
 	this->_client.send(page_content);
-
-	logger << Logger::debug << "Sent error response" << std::endl;
 }
 
 void Response::_send_status(HTTP_STATUS_CODES status_code) {
@@ -249,7 +247,7 @@ bool Response::send() {
 	}
 	this->_ready = SENT;
 	if (this->has_error_status()) {
-		logger << Logger::info << "Sending error response" << std::endl;
+		logger << Logger::info << "Sending error response "<< this->_status_code << std::endl;
 		this->_send_error_response();
 		return (true);
 	}

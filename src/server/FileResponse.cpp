@@ -81,8 +81,8 @@ void FileResponse::delete_files(std::string path) {
 	if (dir == nullptr) {
 		throw std::runtime_error("Error opening directory: " + this->_filename);
 	}
+	std::string deleted_files;
 	struct dirent* entry;
-	this->_page_content += "<h3>Deleted the following files: </h3>\r\n<body>\r\n";
 	while ((entry = readdir(dir)) != nullptr) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
 			continue;
@@ -90,9 +90,14 @@ void FileResponse::delete_files(std::string path) {
 		std::string filename(entry->d_name);
 		std::string full_filename = path + "/" + filename;
 		std::remove(full_filename.c_str());
-		this->_page_content += "<p>" + filename + "</p>\r\n"; //  veranderen naar delete
+		deleted_files += "<p>" + filename + "</p>\r\n";
 	}
-	this->_page_content += "</body>";
+	if (deleted_files.empty()) {
+		this->_page_content = "<h3>No files to delete!</h3>\r\n";
+	}
+	else {
+		this->_page_content += "<h3>Deleted the following files: </h3>\r\n" + deleted_files;
+	}
 }
 
 void FileResponse::directory_listing(void) {

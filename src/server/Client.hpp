@@ -13,6 +13,7 @@ class EventQueue;
 class Client {
 public:
 	Client(Config& config, Server& server, int client_sockfd, sockaddr_in client_address);
+	Config&		config;
 
 	int			get_sockfd(void) const;
 	void		close(void);
@@ -22,7 +23,6 @@ public:
 	void		send(std::string const& str);
 
 private:
-	Config&		_config;
 	Server&		_server;
 	int			_client_sockfd;
 	sockaddr_in _client_address;

@@ -1,11 +1,13 @@
 #include "Client.hpp"
 #include "Logger.hpp"
+#include "Server.hpp"
 #include <fcntl.h>
 #include <sstream>
 #include <unistd.h>
 
-Client::Client(Config& config, int client_sockfd, sockaddr_in client_address)
-	: config(config)
+Client::Client(Config& config, Server& server, int client_sockfd, sockaddr_in client_address)
+	: _config(config)
+	, _server(server)
 	, _client_sockfd(client_sockfd)
 	, _client_address(client_address)
 	, _response(config, *this)
@@ -15,6 +17,13 @@ Client::Client(Config& config, int client_sockfd, sockaddr_in client_address)
 	, _write_buffer("") {
 	if (::fcntl(this->_client_sockfd, F_SETFL, O_NONBLOCK))
 		throw(std::runtime_error("Error setting socket to non-blocking"));
+}
+
+void Client::_end() {
+	logger << Logger::info << "Closing client " << this->_client_sockfd << std::endl;
+	::close(this->_client_sockfd);
+	this->_close_state = CLOSED;
+	this->_server.remove_client(this->_client_sockfd);
 }
 
 void Client::close(void) {
@@ -60,9 +69,8 @@ void Client::_send_part() {
 }
 
 void Client::_handle_state() {
-	if (this->_write_state == WRITE_EOF && this->_close_state != CLOSED){
-		::close(this->_client_sockfd);
-		this->_close_state = CLOSED;
+	if (this->_write_state == WRITE_EOF && this->_close_state != CLOSED) {
+		this->_end();
 	}
 
 	if (this->_want_to_write) {
@@ -75,8 +83,7 @@ void Client::_handle_state() {
 	}
 	else {
 		if (this->_close_state == WANT_TO_CLOSE) {
-			::close(this->_client_sockfd);
-			this->_close_state = CLOSED;
+			this->_end();
 		}
 	}
 }

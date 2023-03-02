@@ -29,6 +29,7 @@ private:
 	void				define_auto_index();
 	void				generate_response();
 	void				directory_listing();
+	void				delete_files(std::string path);
 	std::string			_file_dir;
 	std::string			_filename;
 	bool				_file_accessible;

@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "util.hpp"
 #include "defines.hpp"
+#include <cstdio>
 
 FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
 	this->_file_dir = config.get_root() + "/";
@@ -44,8 +45,7 @@ void FileResponse::load_page_content(void) {
 }
 
 void FileResponse::define_status(void) {
-	if (this->request.location.is_set() && !this->request.location.get_redirect().empty())
-	{
+	if (this->request.location.is_set() && !this->request.location.get_redirect().empty()) {
 		this->_status_code = HTTP_MOVED_PERMANENTLY;
 	}
 	else if (!this->_file_accessible) {
@@ -68,14 +68,31 @@ void FileResponse::define_status(void) {
 void FileResponse::define_content_type(void) {
 	std::string file_extension = util::get_file_extension(this->_filename);
 
-	try
-	{
+	try {
 		this->_content_type = util::get_content_type(file_extension);
 	}
-	catch(const std::exception& e)
-	{
+	catch(const std::exception& e) {
 		logger << Logger::error << "Requested file type with extension \"" << file_extension << "\" invalid." << std::endl;
 	}
+}
+
+void FileResponse::delete_files(std::string path) {
+	DIR* dir = opendir(this->_filename.c_str());
+	if (dir == nullptr) {
+		throw std::runtime_error("Error opening directory: " + this->_filename);
+	}
+	struct dirent* entry;
+	this->_page_content += "<h3>Deleted the following files: </h3>\r\n<body>\r\n";
+	while ((entry = readdir(dir)) != nullptr) {
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+			continue;
+		}
+		std::string filename(entry->d_name);
+		std::string full_filename = path + "/" + filename;
+		std::remove(full_filename.c_str());
+		this->_page_content += "<p>" + filename + "</p>\r\n"; //  veranderen naar delete
+	}
+	this->_page_content += "</body>";
 }
 
 void FileResponse::directory_listing(void) {
@@ -101,7 +118,8 @@ void FileResponse::directory_listing(void) {
 
 void FileResponse::generate_response(void) {
 	if (this->_auto_indexing) {
-		this->_response_status = HTTP_OK;
+		this->_status_code = HTTP_OK;
+		this->_response_status = util::get_response_status(HTTP_OK);
 		this->_content_type = "text/html";
 		try {
 			this->directory_listing();
@@ -110,6 +128,20 @@ void FileResponse::generate_response(void) {
 		catch(const std::exception& e) {
 			logger << Logger::warn << e.what() << std::endl;
 		}
+	}
+	if (this->request.method == DELETE) {
+		this->_status_code = HTTP_OK;
+		this->_response_status = util::get_response_status(HTTP_OK);
+		this->_content_type = "text/html";
+		try {
+			logger << Logger::debug << "Deleting files now\n";
+			this->delete_files(this->_filename);
+			return;
+		}
+		catch(const std::exception& e) {
+			logger << Logger::warn << "Folder " << this->_filename << " does not exist. No files to be deleted." << '\n';
+		}
+		
 	}
 	this->load_page_content();
 	this->define_status();
@@ -135,5 +167,7 @@ void FileResponse::generate_response(void) {
 std::string FileResponse::get_response(void) const {
 	std::string response = this->request.http_version + " " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
 	logger << Logger::info << "Response sent with status code " << this->_response_status << std::endl;
+	// logger << Logger::info << "Response sent: " << response << std::endl;
+
 	return response;
 }

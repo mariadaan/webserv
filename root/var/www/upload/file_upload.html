@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>File upload</title>
-  </head>
-  <body>
+	<head>
+		<title>File upload</title>
+	</head>
 
+<body>
 <h1>What are the CGI's environment variables?</h1>
 <h3><i>Test GET request</i></h3>
 <form action = "print_cgi_envs.py" method = "get">
@@ -20,21 +20,23 @@
 	</form>
 <h1>Try to upload a file here</h1>
 <h3><i>Test POST request</i></h3>
-    <form action="upload_file.py" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload File">
-      </form>
-  <head>
+	<form action="upload_file.py" method="post" enctype="multipart/form-data">
+		<input type="file" name="file">
+		<input type="submit" value="Upload File">
+	</form>
 <h3><i>Test DELETE request</i></h3>
-    <script>
-      function deleteFiles() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("DELETE", "/uploads", true);
-        xhr.send();
-      }
-    </script>
-  </head>
-  <body>
-    <button onclick="deleteFiles()">Delete Uploaded Files</button>
-  </body>
+	<script>
+	  function deleteFiles() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("DELETE", "/uploads", true);
+		xhr.addEventListener('readystatechange', () => {
+			if (xhr.status == 200) {
+				document.body.innerHTML = xhr.response;
+			}
+		})
+		xhr.send();
+	  }
+	</script>
+	<button onclick="deleteFiles()">Delete Uploaded Files</button>
+</body>
 </html>

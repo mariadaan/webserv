@@ -5,13 +5,27 @@
   </head>
   <body>
 
-<h1>Try to upload a file here:</h1>
+<h1>What are the CGI's environment variables?</h1>
+<h3><i>Test GET request</i></h3>
+<form action = "print_cgi_envs.py" method = "get">
+	<input type = "submit" value = "Let's see!" />
+</form>
+
+<h1>What is my name in reverse?</h1>
+<h3><i>Test GET request</i></h3>
+	<form action = "get_name.py" method = "get">
+		First Name: <input type="text" name="first_name">  <br />
+		Last Name: <input type="text" name="last_name" />
+		<input type = "submit" value = "Submit" />
+	</form>
+<h1>Try to upload a file here</h1>
+<h3><i>Test POST request</i></h3>
     <form action="upload_file.py" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
         <input type="submit" value="Upload File">
       </form>
-  </body>
   <head>
+<h3><i>Test DELETE request</i></h3>
     <script>
       function deleteFiles() {
         var xhr = new XMLHttpRequest();

@@ -56,6 +56,20 @@ void EventQueue::add_write_event_listener(int sockfd) {
 	}
 }
 
+void EventQueue::add_cgi_event_listener(int cgi_fd, int client_sockfd) {
+	struct kevent kev;
+
+	EV_SET(&kev, cgi_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	int ret = ::kevent(this->_kq, &kev, 1, NULL, 0, NULL);
+	if (ret == -1) {
+		throw std::runtime_error("Error adding event listener");
+	}
+	if (kev.flags & EV_ERROR) {
+		throw std::runtime_error("Event error: " + std::string(strerror(kev.data)));
+	}
+	this->_cgi_client[cgi_fd] = client_sockfd;
+}
+
 void EventQueue::event_loop(void) {
 	struct kevent ev_rec;
 
@@ -68,9 +82,16 @@ void EventQueue::event_loop(void) {
 		if (this->_servers.count(ev_rec.ident) > 0) {
 			this->accept_client_on(*(this->_servers.at(ev_rec.ident)));
 		}
-		else {
+		else if (this->_client_server.count(ev_rec.ident) > 0) {
 			// logger << Logger::info << "Got event on client: " << ev_rec.ident << std::endl;
-			(*(this->_servers.at(this->_client_server[ev_rec.ident]))).get_client(ev_rec.ident).handle_event(ev_rec);
+			(*(this->_servers.at(this->_client_server[ev_rec.ident]))).get_client(ev_rec.ident).handle_event(ev_rec, *this);
+		}
+		else if (this->_cgi_client.count(ev_rec.ident) > 0) {
+			// logger << Logger::info << "Got event on cgi: " << ev_rec.ident << std::endl;
+			(*(this->_servers.at(this->_client_server[this->_cgi_client[ev_rec.ident]]))).get_client(this->_cgi_client[ev_rec.ident]).handle_cgi_event(ev_rec);
+		}
+		else {
+			throw std::runtime_error("Got event on unknown fd");
 		}
 	}
 }

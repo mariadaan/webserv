@@ -26,6 +26,7 @@ public:
 	Client	&get_client(int client_sockfd);
 	std::map<int, Client *>	&get_clients();
 	int		get_sockfd(void) const;
+	void	remove_client(int client_sockfd);
 
 private:
 	int						_server_sockfd;

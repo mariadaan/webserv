@@ -43,11 +43,11 @@ int main(int argc, char *argv[]) {
 		}
 		try {
 			keventQueue.event_loop();
-			keventQueue.close_servers();
 		}
 		catch(const std::exception& e) {
 			logger << Logger::error << e.what() << std::endl;
 		}
+		keventQueue.close_servers();
 	}
 	catch(const std::exception& e) {
 		logger << Logger::error << e.what() << std::endl;

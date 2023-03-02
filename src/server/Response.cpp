@@ -3,6 +3,7 @@
 #include "FileResponse.hpp"
 #include "Chunk.hpp"
 #include "Client.hpp"
+#include "EventQueue.hpp"
 #include "defines.hpp"
 #include "util.hpp"
 
@@ -12,7 +13,16 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-Response::Response(Config &config, Client &client) : _client(client), _config(config), _ready(PARSING), _status_code(HTTP_OK), _body_size(0) {
+Response::Response(Config &config, Client &client)
+	: _client(client)
+	, _config(config)
+	, _chunk_builder()
+	, _request()
+	, _cgi()
+	, _ready(PARSING)
+	, _status_code(HTTP_OK)
+	, _body_size(0)
+	, _should_add_cgi_to_event_queue(false) {
 }
 
 void Response::_mark_ready(void) {
@@ -50,6 +60,12 @@ std::string Response::_get_status() {
 	return util::get_response_status(this->_status_code);
 }
 
+void Response::add_cgi_to_event_queue(EventQueue &event_queue) {
+	logger << Logger::error << "Adding CGI to event queue (" << this->_should_add_cgi_to_event_queue << ")" << std::endl;
+	this->_should_add_cgi_to_event_queue = false;
+	event_queue.add_cgi_event_listener(this->_cgi.get_output_fd(), this->_client.get_sockfd());
+}
+
 void Response::_handle_request() {
 	if (!this->_request.is_allowed_method) {
 		logger << Logger::info << "Method not allowed" << std::endl;
@@ -63,6 +79,8 @@ void Response::_handle_request() {
 
 	if (!this->_request.get_script_name().empty()) {
 		this->_cgi = Optional<CGI>(CGI(this->_request, this->_client));
+		this->_should_add_cgi_to_event_queue = true;
+		this->_send_status();
 	}
 	else {
 		// TODO: maybe do something for non-cgi requests
@@ -85,6 +103,9 @@ void Response::_handle_request() {
 			this->_get_body() = "";
 			// this->_finish_request();
 			this->_mark_ready(); // TODO: does this need to be here?
+			if (this->_go_to_cgi()) {
+				this->_cgi.end_of_input();
+			}
 		}
 		else {
 			if (this->_get_body().size() != 0) {
@@ -94,14 +115,6 @@ void Response::_handle_request() {
 			}
 		}
 	}
-}
-
-void Response::_wait_for_cgi() {
-	this->_send_status(); // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
-	// std::string response = "HTTP/1.1 200 OK" CRLF; // https://www.rfc-editor.org/rfc/rfc3875#section-6.2.1
-	// ::send(this->_client.get_sockfd(), response.c_str(), response.size(), 0);
-	std::string response = this->_cgi.wait(); // currently also closes the write end of the pipe
-	this->_client.send(response);
 }
 
 std::string &Response::_get_body(void) {
@@ -119,6 +132,11 @@ void Response::_handle_body_chunks(std::string const &received) {
 			logger << Logger::info << "Got last chunk" << std::endl;
 			// this->_finish_request();
 			this->_mark_ready();
+
+			if (this->_go_to_cgi()) {
+				this->_cgi.end_of_input();
+			}
+
 			return ;
 		}
 
@@ -143,6 +161,9 @@ void Response::_handle_body(std::string const &received) {
 
 	if (this->_go_to_cgi()) {
 		this->_cgi.write(received.c_str(), receive_size);
+		if (this->_body_size >= this->_request.get_content_length()) {
+			this->_cgi.end_of_input();
+		}
 	}
 	else {
 		if (receive_size != received.size()) {
@@ -222,15 +243,15 @@ void Response::_send_status() {
 	this->_send_status(this->_status_code);
 }
 
-void Response::send() {
+bool Response::send() {
 	if (this->_ready == SENT) {
-		return ;
+		return (true);
 	}
 	this->_ready = SENT;
 	if (this->has_error_status()) {
 		logger << Logger::info << "Sending error response" << std::endl;
 		this->_send_error_response();
-		return ;
+		return (true);
 	}
 
 	if (this->_go_to_cgi()) {
@@ -238,11 +259,12 @@ void Response::send() {
 		// if (!this->_request.is_chunked) {
 		// 	this->_cgi.write(this->_request.body.c_str(), this->_request.body.size());
 		// }
-		this->_wait_for_cgi();
+		return (false);
 	}
 	else {
 		this->_send_file_response();
 	}
+	return (true);
 }
 
 bool Response::is_ready() const {
@@ -251,4 +273,22 @@ bool Response::is_ready() const {
 
 bool Response::has_error_status() const {
 	return (this->_status_code >= 400);
+}
+
+void Response::handle_cgi_event(struct kevent& ev_rec) {
+	logger << Logger::debug << "Can read " << ev_rec.data << " bytes" << std::endl;
+	char *buf = new char[ev_rec.data];
+	ssize_t bytes_read = ::read(ev_rec.ident, buf, ev_rec.data);
+	std::string received(buf, bytes_read);
+	delete[] buf;
+	this->_client.send(received);
+	if (ev_rec.flags & EV_EOF) {
+		this->_client.close();
+		this->_cgi.wait();
+		return ;
+	}
+}
+
+bool Response::should_add_cgi_to_event_queue() const {
+	return (this->_should_add_cgi_to_event_queue);
 }

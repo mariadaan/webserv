@@ -10,9 +10,7 @@ FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(conf
 		this->_file_dir = this->request.location.get_root() + "/";
 	}
 	this->_filename = this->_file_dir + this->request.path;
-	logger << Logger::debug << "Filename: " << this->_filename << std::endl;
 	std::string index_file = this->_filename + "/" + this->request.location.get_index();
-	logger << Logger::debug << "index file: " << index_file << std::endl;
 	if (this->request.location.is_set() && !this->request.location.get_index().empty() && util::can_open_file(index_file)) {
 		this->_filename = index_file;
 	}

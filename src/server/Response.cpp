@@ -61,7 +61,7 @@ std::string Response::_get_status() {
 }
 
 void Response::add_cgi_to_event_queue(EventQueue &event_queue) {
-	logger << Logger::error << "Adding CGI to event queue (" << this->_should_add_cgi_to_event_queue << ")" << std::endl;
+	logger << Logger::info << "Adding CGI to event queue" << std::endl;
 	this->_should_add_cgi_to_event_queue = false;
 	event_queue.add_cgi_event_listener(this->_cgi.get_output_fd(), this->_client.get_sockfd());
 }

@@ -315,7 +315,7 @@ std::map<std::string, bool>	return_methods_map(void)
 	std::map<std::string, bool>	methods;
 	methods["GET"] = true;
 	methods["POST"] = true;
-	methods["DELETE"] = false;
+	methods["DELETE"] = true;
 	methods["PUT"] = false;
 	methods["PATCH"] = false;
 	return (methods);

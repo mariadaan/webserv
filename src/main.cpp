@@ -16,15 +16,17 @@ Logger logger;
 int main(int argc, char *argv[]) {
 	logger << std::boolalpha;
 
-	std::string config_filename;
+	std::string config_filename = "./root/conf/";
 
-	if (argc < 2)
-		config_filename = "root/conf/server.conf";
-	else
-		config_filename = argv[1];
-	logger << Logger::info << "Parsed config file: " << config_filename << std::endl;
+	if (argc < 2) {
+		config_filename += "default_server.conf";
+	}
+	else {
+		config_filename += argv[1];
+	}
 	try {
 		ParsedConfigFile config(config_filename.c_str());
+		logger << Logger::info << "Parsed config file: " << config_filename << std::endl;
 		EventQueue keventQueue;
 		try {
 			for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {

@@ -19,6 +19,7 @@ touch YoupiBanane/Yeah/not_happy.bad_extension
 # Set up the configuration file
 echo 'server {
 	listen 80 default_server;
+	server_name mariamariuspieter.nl
 	root   ./root/var/www;
 
 	location / {
@@ -27,10 +28,6 @@ echo 'server {
 	}
 
 	location /put_test/ {
-		request_method PUT;
-		client_body_temp_path ./root/var/www/uploads;
-		client_body_in_file_only on;
-		client_body_buffer_size 128K;
 		client_max_body_size 10M;
 	}
 
@@ -44,12 +41,9 @@ echo 'server {
 		client_max_body_size 100;
 	}
 
-	location /directory/ {
+	location /directory {
 		request_method GET;
 		root ./YoupiBanane;
-		autoindex on;
-		autoindex_exact_size off;
-		autoindex_localtime on;
 		index youpi.bad_extension;
 	}
 	cgi bla

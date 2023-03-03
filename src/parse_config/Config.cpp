@@ -33,7 +33,7 @@ Config& Config::operator=(Config other)
 }
 
 Config::Config(std::vector<std::string> &server_vector)
-	: _port(80), _max_size(1), _error_pages(return_default_error_map())
+	: _port(80), _max_size(0), _error_pages(return_default_error_map())
 {
 	Config::conf_parser	enum_value;
 
@@ -58,13 +58,20 @@ Config::Config(std::vector<std::string> &server_vector)
 		else
 			call_keyword_function(enum_value, server_vector[i]);
 	}
+	for (std::map<std::string,Location>::iterator it = _locations.begin(); it != _locations.end(); it++){
+		if (it->second.get_max_size() == 0 && this->_max_size != 0)
+			it->second.set_max_size(this->_max_size);
+	}
+	if (_server_names.empty())
+		throw std::runtime_error("No server name(s) defined in the server block listening on port " + std::to_string(_port));
+		
 }
 
 // ---------------------------------- SETTERS -----------------------------------------
 
 
 void	Config::set_port(unsigned int &port) 								{_port = port;}
-void	Config::set_max_size(unsigned int &max_size) 						{_max_size = max_size;}
+void	Config::set_max_size(size_t &max_size) 								{_max_size = max_size;}
 void	Config::set_server_names(std::vector<std::string> &server_names)	{_server_names = server_names;}
 void	Config::set_root(std::string &root) 								{_root = root;}
 void	Config::set_cgi(std::string &cgi) 									{_cgi = cgi;}
@@ -83,7 +90,7 @@ void	Config::set_error_page(const int &key, const std::string &value)
 
 
 const unsigned int							&Config::get_port() const 		{return (_port);}
-const unsigned int							&Config::get_max_size() const 	{return (_max_size);}
+const size_t								&Config::get_max_size() const 	{return (_max_size);}
 const std::vector<std::string>				&Config::get_server_names() const {return (_server_names);}
 const std::string							&Config::get_root() const 		{return (_root);}
 const std::string							&Config::get_cgi() const 		{return (_cgi);}
@@ -129,6 +136,7 @@ const std::string							&Config::get_error_page(const int &key) const
 void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string &line)
 {
 	unsigned	int value;
+	size_t		max_size;
 
 	if (enum_value == LISTEN){
 		value = value_to_unsigned(line, false);
@@ -136,7 +144,8 @@ void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string 
 	}
 	else if (enum_value == MAX_SIZE){
 		value = value_to_unsigned(line, true);
-		this->set_max_size(value);
+		max_size = (size_t)value;
+		this->set_max_size(max_size);
 	}
 	else if (enum_value == ROOT || enum_value == CGI)
 		value_to_string(*this, line, enum_value);
@@ -193,7 +202,6 @@ Config::conf_parser	determine_if_keyword(const std::string &word)
 	return (Config::NOT_A_KEYWORD);
 }
 
-
 //Function that gets called in Config constructor when a 'location' keyword is found
 //Searches and returns the body of the location
 std::vector<std::string>	return_location_body(std::vector<std::string> &server_vector, size_t i, size_t end)
@@ -205,7 +213,6 @@ std::vector<std::string>	return_location_body(std::vector<std::string> &server_v
 	}
 	return (location_body);
 }
-
 
 //converts string to unsigned int
 //if input is not only digits exception is trown
@@ -303,14 +310,14 @@ void	value_to_error(Config &object, std::string &line)
 
 //Creates a map<string,bool> for the methods map in the Location class
 //All the values are iniated to be true at first
-std::map<std::string, bool>	return_true_methods_map(void)
+std::map<std::string, bool>	return_methods_map(void)
 {
 	std::map<std::string, bool>	methods;
 	methods["GET"] = true;
 	methods["POST"] = true;
-	methods["DELETE"] = true;
-	methods["PUT"] = true;
-	methods["PATCH"] = true;
+	methods["DELETE"] = false;
+	methods["PUT"] = false;
+	methods["PATCH"] = false;
 	return (methods);
 }
 
@@ -360,7 +367,6 @@ std::string	get_second_word(std::string &line)
 	ss >> word; //get second word
 	return (word);
 }
-
 
 //Finds first word of string 'line' and returns this word
 std::string find_first_word(std::string &line)

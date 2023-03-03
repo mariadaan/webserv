@@ -13,12 +13,12 @@
 Location::~Location(){}
 
 Location::Location()
-	: _request_methods(return_true_methods_map()), _auto_index(false)
+	: _request_methods(return_methods_map()), _auto_index(false)
 {
 }
 
 Location::Location(std::vector<std::string> &location_body)
-	: _request_methods(return_true_methods_map()), _auto_index(false)
+	: _request_methods(return_methods_map()), _max_size(0), _auto_index(false)
 {
 	for (size_t i = 0; i < location_body.size(); i++)
 	{
@@ -60,9 +60,8 @@ Location::Location(std::vector<std::string> &location_body)
 			std::string	second = get_second_word(location_body[i]);
 			if (second.empty())
 				continue ;
-			_max_size = value_to_unsigned(location_body[i], true);
+			_max_size = (size_t)value_to_unsigned(location_body[i], true);
 		}
-		//DIT NOG AANPASSEN WAT IS EEN BEETJE OMSLAGTIG OM MET OPTIONAL CLASS TE DOEN
 		else if (word == "redirect"){
 			std::string	second = get_second_word(location_body[i]);
 			if (second.empty() || !this->_redirect.empty())
@@ -77,7 +76,8 @@ Location::Location(std::vector<std::string> &location_body)
 const std::string					&Location::get_index() const 			{return (_index);}
 const std::string					&Location::get_upload() const 			{return (_upload);}
 const std::string					&Location::get_root() const 			{return (_root);}
-const std::string					&Location::get_redirect() const 			{return (_redirect);}
+const std::string					&Location::get_redirect() const 		{return (_redirect);}
+size_t								Location::get_max_size() const 			{return (_max_size);}
 bool							 	Location::get_auto_index() const 		{return (_auto_index);}
 bool								Location::get_request_methods(const std::string &key) const
 {
@@ -87,6 +87,10 @@ bool								Location::get_request_methods(const std::string &key) const
 }
 
 // -------------------------------------- OTHER FUNCTIONS -----------------------------------------
+
+void	Location::set_max_size(size_t size){
+	_max_size = size;
+}
 
 //prints out a Location class
 void	Location::print_location_class(void)

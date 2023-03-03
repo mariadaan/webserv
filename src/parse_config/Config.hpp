@@ -13,7 +13,7 @@ class Config
 {
 	private:
 		unsigned int						_port;
-		unsigned int						_max_size;
+		size_t								_max_size;
 		std::vector<std::string>			_server_names;
 		std::string							_root;
 		std::string							_cgi;
@@ -40,7 +40,7 @@ class Config
 
 		//getters
 		const unsigned int				&get_port() const;
-		const unsigned int				&get_max_size() const;
+		const size_t					&get_max_size() const;
 		const std::vector<std::string>	&get_server_names() const;
 		const std::string				&get_root() const;
 		const std::string				&get_cgi() const;
@@ -50,7 +50,7 @@ class Config
 
 		//setters
 		void	set_port(unsigned int &port);
-		void	set_max_size(unsigned int &max_size);
+		void	set_max_size(size_t &max_size);
 		void	set_server_names(std::vector<std::string> &server_names);
 		void	set_root(std::string &root);
 		void	set_cgi(std::string &cgi);
@@ -67,7 +67,7 @@ unsigned int							value_to_unsigned(std::string &line, bool maxBody);
 void									value_to_string_vector(Config &object, std::string &line);
 void									value_to_string(Config &object, std::string &line, Config::conf_parser &enum_value);
 void									value_to_error(Config &object, std::string &line);
-std::map<std::string, bool>				return_true_methods_map(void);
+std::map<std::string, bool>				return_methods_map(void);
 void									set_methods_map_false(std::map<std::string, bool>& methods);
 std::map<int,std::string>				return_default_error_map(void);
 std::string								get_third_word(std::string &line);

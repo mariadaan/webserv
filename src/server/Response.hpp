@@ -22,6 +22,7 @@ class Response {
 		void	handle_cgi_event(struct kevent& ev_rec);
 		bool	should_add_cgi_to_event_queue() const;
 		void	add_cgi_to_event_queue(EventQueue &event_queue);
+		bool	exceeds_max_body_size();
 
 	private:
 		Client		&_client;

@@ -138,10 +138,9 @@ namespace util {
 		status_codes[HTTP_NO_CONTENT] = "204 No Content";
 		status_codes[HTTP_MOVED_PERMANENTLY] = "301 Moved Permanently";
 		status_codes[HTTP_BAD_REQUEST] = "400 Bad Request";
-		// status_codes[HTTP_UNAUTHORIZED] = "401 Unauthorized";
-		// status_codes[HTTP_FORBIDDEN] = "403 Forbidden";
 		status_codes[HTTP_NOT_FOUND] = "404 Not Found";
 		status_codes[HTTP_METHOD_NOT_ALLOWED] = "405 Method Not Allowed";
+		status_codes[HTTP_ENTITY_TOO_LARGE] = "413 Request Entity Too Large";
 		// status_codes[HTTP_INTERNAL_SERVER_ERROR] = "500 Internal Server Error";
 		// status_codes[HTTP_SERVICE_UNAVAILABLE] = "503 Service Unavailable";
 

@@ -12,11 +12,12 @@ FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(conf
 	}
 	this->_filename = this->_file_dir + this->request.path;
 	std::string index_file = this->_filename + "/" + this->request.location.get_index();
-	if (this->request.location.is_set() && !this->request.location.get_index().empty() && util::can_open_file(index_file)) {
+	if (this->request.method != POST && this->request.location.is_set() && !this->request.location.get_index().empty() && util::can_open_file(index_file)) {
 		this->_filename = index_file;
 	}
-	else
+	else {
 		this->_filename = this->_file_dir + this->request.path;
+	}
 	this->define_auto_index();
 	this->generate_response();
 	logger << Logger::debug << "Filename: " << this->_filename << std::endl;
@@ -121,6 +122,26 @@ void FileResponse::directory_listing(void) {
 	closedir(dir);
 }
 
+bool FileResponse::exceeds_max_body_size() {
+	size_t max_body_size;
+
+	if (this->request.location.is_set() && this->request.location.get_max_size() != 0) {
+		max_body_size = this->request.location.get_max_size();
+	}
+	else {
+		max_body_size = this->config.get_max_size();
+	}
+	if (max_body_size == 0) {
+		return false;
+	}
+	if (this->request.get_content_length() > max_body_size) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 void FileResponse::generate_response(void) {
 	if (this->_auto_indexing) {
 		this->_status_code = HTTP_OK;
@@ -134,7 +155,7 @@ void FileResponse::generate_response(void) {
 			logger << Logger::warn << e.what() << std::endl;
 		}
 	}
-	if (this->request.method == DELETE) {
+	if (this->request.method == DELETE && this->request.is_allowed_method == true) {
 		this->_status_code = HTTP_OK;
 		this->_response_status = util::get_response_status(HTTP_OK);
 		this->_content_type = "text/html";
@@ -146,7 +167,19 @@ void FileResponse::generate_response(void) {
 		catch(const std::exception& e) {
 			logger << Logger::warn << "Folder " << this->_filename << " does not exist. No files to be deleted." << '\n';
 		}
-		
+	}
+	if (this->request.method == POST && this->request.is_allowed_method == true) {
+		this->_content_type = "text/plain";
+		if (this->exceeds_max_body_size()) {
+			this->_status_code = HTTP_ENTITY_TOO_LARGE;
+			this->_page_content = "Request entity too large\r\n";
+		}
+		else {
+			this->_status_code = HTTP_OK;
+			this->_page_content = "Received message: " + this->request.body + CRLF;
+		}
+		this->_response_status = util::get_response_status(this->_status_code);
+		return ;
 	}
 	this->load_page_content();
 	this->define_status();
@@ -156,7 +189,7 @@ void FileResponse::generate_response(void) {
 		logger << Logger::info << "Redirecting\n";
 		std::string new_location = this->request.location.get_redirect();
 		this->_content_type = "text/html";
-		this->_page_content = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n  <title>301 Moved Permanently</title>\r\n</head>\r\n<body>\r\n  <h1>301 Moved Permanently</h1>\r\n  <p>The page you requested has moved <a href=\"http://" + this->request.get_header("host") + new_location + "\">here</a>.</p>\r\n</body>\r\n</html>";
+		this->_page_content = "<head>\r\n  <title>301 Moved Permanently</title>\r\n</head>\r\n<body>\r\n  <h1>301 Moved Permanently</h1>\r\n  <p>The page you requested has moved <a href=\"http://" + this->request.get_header("host") + new_location + "\">here</a>.</p>\r\n</body>\r\n</html>";
 		std::string content_length = std::to_string(this->_page_content.length());
 		this->_content_type = "text/html\r\nContent-Length: " + content_length + "\r\nLocation: http://" + this->request.get_header("host") + new_location;
 		return ;
@@ -169,10 +202,12 @@ void FileResponse::generate_response(void) {
 	this->define_content_type();
 }
 
+HTTP_STATUS_CODES FileResponse::get_status() const {
+	return (this->_status_code);
+}
+
 std::string FileResponse::get_response(void) const {
 	std::string response = this->request.http_version + " " + this->_response_status + CRLF + "Content-Type: " + this->_content_type + CRLF + CRLF + this->_page_content;
-	logger << Logger::info << "Response sent with status code " << this->_response_status << std::endl;
-	// logger << Logger::info << "Response sent: " << response << std::endl;
-
+	logger << Logger::info << "Response sent with status " << this->_response_status << std::endl;
 	return response;
 }

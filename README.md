@@ -19,10 +19,10 @@ Compile the webserver through the makefile:
 make
 ```
 
-Run executable (optionally with path to a configuration file):
+Run executable (optionally with a configuration file, which should be located in the root/conf folder. No need to specify the path.):
 
 ```console
-./webserver [OPTIONAL: path-to-configfile] 
+./webserver [OPTIONAL: configfile.conf] 
 ```
 
 

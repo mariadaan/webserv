@@ -18,6 +18,7 @@ FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(conf
 	else {
 		this->_filename = this->_file_dir + this->request.path;
 	}
+	util::replace_all(this->_filename, "%20", " ");
 	this->define_auto_index();
 	this->generate_response();
 	logger << Logger::debug << "Filename: " << this->_filename << std::endl;

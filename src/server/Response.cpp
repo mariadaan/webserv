@@ -66,6 +66,26 @@ void Response::add_cgi_to_event_queue(EventQueue &event_queue) {
 	event_queue.add_cgi_event_listener(this->_cgi.get_output_fd(), this->_client.get_sockfd());
 }
 
+bool Response::exceeds_max_body_size() {
+	size_t max_body_size;
+
+	if (this->_request.location.is_set() && this->_request.location.get_max_size() != 0) {
+		max_body_size = this->_request.location.get_max_size();
+	}
+	else {
+		max_body_size = this->_config.get_max_size();
+	}
+	if (max_body_size == 0) {
+		return false;
+	}
+	if (this->_request.get_content_length() > max_body_size) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 void Response::_handle_request() {
 	if (!this->_request.is_allowed_method) {
 		logger << Logger::info << "Method not allowed" << std::endl;
@@ -76,11 +96,21 @@ void Response::_handle_request() {
 	}
 
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
+	if (this->_request.location.is_set()) {
+		logger << Logger::debug << "With Location: \n";
+		this->_request.location.print_location_class();
+	}
 
 	if (!this->_request.get_script_name().empty()) {
-		this->_cgi = Optional<CGI>(CGI(this->_request, this->_client));
-		this->_should_add_cgi_to_event_queue = true;
-		this->_send_status();
+		if (this->_request.has_header("content-length") && this->exceeds_max_body_size()) {
+			logger << Logger::warn << "File too large! \n";
+			// don't go to cgi
+		}
+		else {
+			this->_cgi = Optional<CGI>(CGI(this->_request, this->_client));
+			this->_should_add_cgi_to_event_queue = true;
+			this->_send_status();
+		}
 	}
 	else {
 		// TODO: maybe do something for non-cgi requests

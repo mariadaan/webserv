@@ -19,7 +19,8 @@ public:
 	Config			&config;
 	ParsedRequest	&request;
 
-	std::string		get_response() const;
+	std::string			get_response() const;
+	HTTP_STATUS_CODES	get_status() const;
 
 private:
 	bool				can_open_file();
@@ -27,6 +28,7 @@ private:
 	void				define_status();
 	void				define_content_type();
 	void				define_auto_index();
+	bool				exceeds_max_body_size();
 	void				generate_response();
 	void				directory_listing();
 	void				delete_files(std::string path);

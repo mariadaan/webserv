@@ -12,7 +12,7 @@ class Location
 		std::string					_root;
 		std::map<std::string, bool>	_request_methods;
 		std::string					_upload;
-		unsigned int				_max_size;
+		size_t						_max_size;
 		bool						_auto_index;
 		std::string					_redirect;
 
@@ -29,18 +29,10 @@ class Location
 		const std::string					&get_redirect() const;
 		bool								get_request_methods(const std::string &key) const;
 		bool							 	get_auto_index() const;
-
+		size_t								get_max_size() const;
+		
+		void 	set_max_size(size_t size);
 		void	print_location_class();
 };
 
 #endif
-
-
-// void Response::_build_request(std::string const &received) {
-// 	if (!this->_request.is_set()) {
-// 		this->_request = Optional<ParsedRequest>(ParsedRequest(received));
-// 	}
-// 	else {
-// 		this->_request.parse_part(received);
-// 	}
-// }

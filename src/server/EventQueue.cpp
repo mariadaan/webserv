@@ -16,10 +16,6 @@ void EventQueue::add_server(Server *server) {
 
 void EventQueue::close_servers(void) {
 	for (std::map<int, Server*>::iterator it_server = this->_servers.begin(); it_server != this->_servers.end(); it_server++) {
-		// TODO: checken of de clients hier deleten wel logisch is
-		for (std::map<int, Client*>::iterator it_client = it_server->second->get_clients().begin(); it_client != it_server->second->get_clients().end(); it_client++) {
-			delete it_client->second;
-		}
 		(*(it_server->second)).close();
 		delete it_server->second;
 	}

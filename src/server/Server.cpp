@@ -13,8 +13,14 @@ Server::Server(Config &config, int domain, int socketType, int protocol)
 	this->_server_sockfd = socket(_domain, _socket_type, _protocol);
 	if (this->_server_sockfd < 0)
 		throw std::runtime_error("Error creating socket");
-	// if (fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
-	// 	throw (std::runtime_error("Error setting socket to non-blocking"));
+	if (::fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
+		throw (std::runtime_error("Error setting socket to non-blocking"));
+}
+
+Server::~Server() {
+	for (std::map<int, Client *>::iterator it = this->_clients.begin(); it != this->_clients.end(); it++) {
+		delete it->second;
+	}
 }
 
 void Server::set_address(void) {
@@ -65,4 +71,5 @@ std::map<int, Client *> &Server::get_clients() {
 
 void Server::remove_client(int client_sockfd) {
 	delete this->_clients.at(client_sockfd);
+	this->_clients.erase(client_sockfd);
 }

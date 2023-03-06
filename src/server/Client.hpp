@@ -2,6 +2,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include "NonBlockingStream.hpp"
 #include "Response.hpp"
 
 #include <netinet/in.h>
@@ -10,7 +11,7 @@
 class Server;
 class Config;
 class EventQueue;
-class Client {
+class Client : private NonBlockingStreamReader {
 public:
 	Client(Config& config, Server& server, int client_sockfd, sockaddr_in client_address);
 	Config&		config;
@@ -29,24 +30,10 @@ private:
 
 	Response _response;
 
-	bool _want_to_write;
-	enum {
-		CANNOT_WRITE,
-		CAN_WRITE,
-		WRITE_EOF
-	}	_write_state;
-	enum {
-		OPEN,
-		WANT_TO_CLOSE,
-		CLOSED
-	} 			_close_state;
-	std::string	_write_buffer;
+	NonBlockingStream _stream_event_handler;
 
-	void _end();
-	void _send_part();
-	void _handle_state();
-	void _handle_read_event(struct kevent& ev_rec, EventQueue& event_queue);
-	void _handle_write_event(struct kevent& ev_rec);
+	virtual void nbsr_read_impl(std::string str, EventQueue& event_queue);
+	virtual void nbsr_end();
 };
 
 #endif

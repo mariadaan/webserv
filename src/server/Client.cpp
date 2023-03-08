@@ -92,8 +92,7 @@ void Client::_handle_read_event(struct kevent& ev_rec, EventQueue& event_queue) 
 	if (ev_rec.flags & EV_EOF) {
 		logger << Logger::info << "Client disconnected: " << this->get_sockfd()
 			   << std::endl;
-		::close(this->get_sockfd());
-		this->_close_state = CLOSED;
+		this->_end();
 	}
 	else {
 		size_t		bytes_available = ev_rec.data;

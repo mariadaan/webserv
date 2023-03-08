@@ -312,7 +312,8 @@ void Response::handle_cgi_event(struct kevent& ev_rec) {
 	this->_client.send(received);
 	if (ev_rec.flags & EV_EOF) {
 		this->_client.close();
-		this->_cgi.wait();
+		this->_status_code = this->_cgi.wait();
+		// TODO: actually send the right response
 		return ;
 	}
 }

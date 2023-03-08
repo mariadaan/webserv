@@ -22,7 +22,8 @@ Response::Response(Config &config, Client &client)
 	, _ready(PARSING)
 	, _status_code(HTTP_OK)
 	, _body_size(0)
-	, _should_add_cgi_to_event_queue(false) {
+	, _should_add_cgi_to_event_queue(false)
+	, _cgi_buffer("") {
 }
 
 void Response::_mark_ready(void) {
@@ -109,7 +110,7 @@ void Response::_handle_request() {
 		else {
 			this->_cgi = Optional<CGI>(CGI(this->_request, this->_client));
 			this->_should_add_cgi_to_event_queue = true;
-			this->_send_status();
+			// this->_send_status();
 		}
 	}
 	else {
@@ -273,13 +274,13 @@ void Response::_send_status() {
 
 bool Response::send() {
 	if (this->_ready == SENT) {
-		return (true);
+		return (!this->_go_to_cgi());
 	}
 	this->_ready = SENT;
 	if (this->has_error_status()) {
 		logger << Logger::info << "Sending error response "<< this->_status_code << std::endl;
 		this->_send_error_response();
-		return (true);
+		return (!this->_go_to_cgi());
 	}
 
 	if (this->_go_to_cgi()) {
@@ -309,11 +310,17 @@ void Response::handle_cgi_event(struct kevent& ev_rec) {
 	ssize_t bytes_read = ::read(ev_rec.ident, buf, ev_rec.data);
 	std::string received(buf, bytes_read);
 	delete[] buf;
-	this->_client.send(received);
+	this->_cgi_buffer += received;
 	if (ev_rec.flags & EV_EOF) {
-		this->_client.close();
 		this->_status_code = this->_cgi.wait();
-		// TODO: actually send the right response
+		if (this->has_error_status()) {
+			this->_send_error_response();
+		}
+		else {
+			this->_send_status();
+			this->_client.send(this->_cgi_buffer);
+		}
+		this->_client.close();
 		return ;
 	}
 }

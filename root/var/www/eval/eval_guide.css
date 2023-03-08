@@ -1,0 +1,41 @@
+.black-box {
+  display: flex;
+  align-items: center;
+  background-color: rgb(46, 46, 46);
+  padding: 10px;
+  border: 2px solid black;
+  border-radius: 10px;
+}
+
+.white-text {
+	color: white;
+	font-family: monospace;
+	font-size: 14px;
+	padding: 10px;
+	border: 1px solid white;
+	border-radius: 5px;
+}
+
+.copy-button {
+	margin-left: 10px;
+}
+
+h3 {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+a {
+	color: rgb(97, 192, 255);
+  }
+
+a:visited {
+	color: rgb(184, 62, 245);
+  }
+
+body {
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: monospace;
+}

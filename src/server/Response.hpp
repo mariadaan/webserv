@@ -13,19 +13,18 @@ class Client;
 class Config;
 class Response {
 	public:
-		Response(Config &config, Client &client);
+		Response(Config &config, Client &client, EventQueue& event_queue);
 
-		void	handle_part(std::string const &received);
+		void	handle_part(std::string const& received);
 		bool	is_ready() const;
 		bool	send();
 		bool	has_error_status() const;
 		void	handle_cgi_event(struct kevent& ev_rec);
-		bool	should_add_cgi_to_event_queue() const;
-		void	add_cgi_to_event_queue(EventQueue &event_queue);
 		bool	exceeds_max_body_size();
 
 	private:
 		Client		&_client;
+		EventQueue	&_event_queue;
 
 		Config		&_config;
 		ChunkBuilder	_chunk_builder;
@@ -40,7 +39,6 @@ class Response {
 		HTTP_STATUS_CODES	_status_code;
 
 		size_t	_body_size;
-		bool	_should_add_cgi_to_event_queue;
 
 		void	_mark_ready(void);
 

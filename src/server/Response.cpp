@@ -13,16 +13,16 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-Response::Response(Config &config, Client &client)
+Response::Response(Config &config, Client &client, EventQueue& event_queue)
 	: _client(client)
+	, _event_queue(event_queue)
 	, _config(config)
 	, _chunk_builder()
 	, _request()
 	, _cgi()
 	, _ready(PARSING)
 	, _status_code(HTTP_OK)
-	, _body_size(0)
-	, _should_add_cgi_to_event_queue(false) {
+	, _body_size(0) {
 }
 
 void Response::_mark_ready(void) {
@@ -58,12 +58,6 @@ void Response::_build_request(std::string const &received) {
 
 std::string Response::_get_status() {
 	return util::get_response_status(this->_status_code);
-}
-
-void Response::add_cgi_to_event_queue(EventQueue &event_queue) {
-	logger << Logger::info << "Adding CGI to event queue" << std::endl;
-	this->_should_add_cgi_to_event_queue = false;
-	event_queue.add_cgi_event_listener(this->_cgi.get_output_fd(), this->_client.get_sockfd());
 }
 
 bool Response::exceeds_max_body_size() {
@@ -107,8 +101,7 @@ void Response::_handle_request() {
 			// don't go to cgi
 		}
 		else {
-			this->_cgi = Optional<CGI>(CGI(this->_request, this->_client));
-			this->_should_add_cgi_to_event_queue = true;
+			this->_cgi = Optional<CGI>(CGI(this->_request, this->_client, this->_event_queue));
 			this->_send_status();
 		}
 	}
@@ -229,6 +222,9 @@ void Response::handle_part(std::string const &received) {
 	if (!this->_headers_parsed()) {
 		this->_build_request(received);
 		if (this->_headers_parsed()) {
+			if (this->_request.path == "/upload_file.py") {
+				logger << Logger::debug << "Trying to upload file" << std::endl;
+			}
 			this->_handle_request();
 		}
 	}
@@ -273,13 +269,13 @@ void Response::_send_status() {
 
 bool Response::send() {
 	if (this->_ready == SENT) {
-		return (true);
+		return (!this->_go_to_cgi());
 	}
 	this->_ready = SENT;
 	if (this->has_error_status()) {
 		logger << Logger::info << "Sending error response "<< this->_status_code << std::endl;
 		this->_send_error_response();
-		return (true);
+		return (!this->_go_to_cgi());
 	}
 
 	if (this->_go_to_cgi()) {
@@ -304,19 +300,18 @@ bool Response::has_error_status() const {
 }
 
 void Response::handle_cgi_event(struct kevent& ev_rec) {
-	logger << Logger::debug << "Can read " << ev_rec.data << " bytes" << std::endl;
-	char *buf = new char[ev_rec.data];
-	ssize_t bytes_read = ::read(ev_rec.ident, buf, ev_rec.data);
-	std::string received(buf, bytes_read);
-	delete[] buf;
-	this->_client.send(received);
-	if (ev_rec.flags & EV_EOF) {
-		this->_client.close();
-		this->_cgi.wait();
-		return ;
-	}
-}
+	this->_cgi.handle_event(ev_rec);
 
-bool Response::should_add_cgi_to_event_queue() const {
-	return (this->_should_add_cgi_to_event_queue);
+
+	// logger << Logger::debug << "Can read " << ev_rec.data << " bytes" << std::endl;
+	// char *buf = new char[ev_rec.data];
+	// ssize_t bytes_read = ::read(ev_rec.ident, buf, ev_rec.data);
+	// std::string received(buf, bytes_read);
+	// delete[] buf;
+	// this->_client.send(received);
+	// if (ev_rec.flags & EV_EOF) {
+	// 	this->_client.close();
+	// 	this->_cgi.wait();
+	// 	return ;
+	// }
 }

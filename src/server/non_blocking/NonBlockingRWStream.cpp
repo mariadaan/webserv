@@ -15,9 +15,9 @@ NonBlockingRWStream::NonBlockingRWStream(int read_fd, int write_fd, NonBlockingS
 {
 }
 
-void NonBlockingRWStream::handle_event(struct kevent& ev_rec, EventQueue& event_queue) {
+void NonBlockingRWStream::handle_event(struct kevent& ev_rec) {
 	if (ev_rec.filter == EVFILT_READ) {
-		NonBlockingReadStream::handle_event(ev_rec, event_queue);
+		NonBlockingReadStream::handle_event(ev_rec);
 	}
 	else if (ev_rec.filter == EVFILT_WRITE) {
 		NonBlockingWriteStream::handle_event(ev_rec);

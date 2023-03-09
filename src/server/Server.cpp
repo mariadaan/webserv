@@ -4,8 +4,9 @@
 #include "Config.hpp"
 #include <fcntl.h>
 
-Server::Server(Config &config, int domain, int socketType, int protocol)
+Server::Server(Config& config, EventQueue& event_queue, int domain, int socketType, int protocol)
 	: config(config)
+	, _event_queue(event_queue)
 	, _domain(domain)
 	, _socket_type(socketType)
 	, _protocol(protocol)
@@ -47,7 +48,7 @@ Client &Server::accept() {
 	int client_sockfd = ::accept(this->_server_sockfd, (sockaddr *)&client_address, &client_len);
 	if (client_sockfd < 0)
 		throw std::runtime_error("Error accepting connection");
-	Client *client = new Client(this->config, *this, client_sockfd, client_address);
+	Client *client = new Client(this->config, *this, this->_event_queue, client_sockfd, client_address);
 	this->_clients[client_sockfd] = client;
 	return *(this->_clients.at(client_sockfd));
 }

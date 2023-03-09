@@ -22,8 +22,6 @@ class NonBlockingWriteStream {
 
 		NonBlockingWriteStream() {};
 
-		NonBlockingStreamWriter* TMP_GET_WRITER() {return _writer;}
-
 	private:
 		void _end();
 		void _handle_state();

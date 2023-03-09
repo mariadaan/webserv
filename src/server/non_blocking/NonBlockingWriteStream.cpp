@@ -37,8 +37,7 @@ void NonBlockingWriteStream::write(std::string const& str) {
 void NonBlockingWriteStream::write(char* str, size_t size) {
 	return this->write(std::string(str, size));
 }
-#include "Logger.hpp"
-#include "CGI.hpp"
+
 void NonBlockingWriteStream::_end() {
 	this->_want_to_write = false;
 	this->_close_state = CLOSED;

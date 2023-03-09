@@ -11,7 +11,7 @@ void NonBlockingReadStream::_end() {
 	this->_reader->_read_end();
 }
 
-void NonBlockingReadStream::handle_event(struct kevent& ev_rec, EventQueue& event_queue) {
+void NonBlockingReadStream::handle_event(struct kevent& ev_rec) {
 	if (ev_rec.filter != EVFILT_READ) {
 		throw std::runtime_error("NonBlockingReadStream: Unknown event filter");
 	}
@@ -21,7 +21,7 @@ void NonBlockingReadStream::handle_event(struct kevent& ev_rec, EventQueue& even
 		int	bytes_read = ::read(this->_fd, buffer, bytes_available);
 		std::string received(buffer, bytes_read);
 		delete[] buffer;
-		this->_reader->_read_data(received, event_queue);
+		this->_reader->_read_data(received);
 	}
 	if (ev_rec.flags & EV_EOF) {
 		this->_end();

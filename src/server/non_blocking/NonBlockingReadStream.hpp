@@ -7,7 +7,7 @@ class EventQueue;
 
 class NonBlockingStreamReader {
 	public:
-		virtual void _read_data(std::string str, EventQueue& event_queue) = 0;
+		virtual void _read_data(std::string str) = 0;
 		virtual void _read_end() = 0;
 
 		virtual ~NonBlockingStreamReader() {};
@@ -17,7 +17,7 @@ class NonBlockingReadStream {
 	public:
 		NonBlockingReadStream(int fd, NonBlockingStreamReader& reader);
 		virtual ~NonBlockingReadStream() {};
-		void handle_event(struct kevent& ev_rec, EventQueue& event_queue);
+		void handle_event(struct kevent& ev_rec);
 		NonBlockingReadStream() {};
 
 	private:

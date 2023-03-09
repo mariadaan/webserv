@@ -7,7 +7,7 @@
 FileResponse::FileResponse(Config &config, ParsedRequest &request) : config(config), request(request) {
 	this->_file_dir = config.get_root() + "/";
 	if (this->request.location.is_set() && !this->request.location.get_root().empty()) {
-		logger << Logger::warn << "Different root found: " << this->request.location.get_root() << std::endl;
+		logger << Logger::info << "Different root found: " << this->request.location.get_root() << std::endl;
 		this->_file_dir = this->request.location.get_root() + "/";
 	}
 	this->_filename = this->_file_dir + this->request.path;
@@ -33,9 +33,9 @@ void FileResponse::define_auto_index(void) {
 
 bool FileResponse::can_open_file() {
 	bool can_open = util::is_file(this->_filename.c_str());
-	if (!can_open) {
-		logger << Logger::warn << "Could not open " << this->_filename << std::endl;
-	}
+	// if (!can_open) {
+	// 	logger << Logger::warn << "Could not open " << this->_filename << std::endl;
+	// }
 	return can_open;
 }
 
@@ -73,8 +73,8 @@ void FileResponse::define_content_type(void) {
 	try {
 		this->_content_type = util::get_content_type(file_extension);
 	}
-	catch(const std::exception& e) {
-		logger << Logger::error << "Requested file type with extension \"" << file_extension << "\" invalid." << std::endl;
+	catch (const std::exception& e) {
+		logger << Logger::warn << "Requested file type with extension \"" << file_extension << "\" invalid." << std::endl;
 	}
 }
 

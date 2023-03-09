@@ -131,6 +131,6 @@ void EventQueue::accept_client_on(Server &server) {
 		this->add_write_event_listener(client.get_sockfd());
 	}
 	catch (const std::exception& e) {
-		logger << Logger::error << e.what() << '\n';
+		logger << Logger::warn << e.what() << '\n';
 	}
 }

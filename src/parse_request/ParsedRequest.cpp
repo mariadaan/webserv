@@ -146,12 +146,9 @@ void ParsedRequest::_parse_metadata() {
 		try {
 			Location location = this->_config->get_location(this->path);
 			this->location = location;
-			this->location.print_location_class();
 			this->is_allowed_method = this->location.get_request_methods(this->method_string);
 		}
-		catch(const std::exception& e) {
-			logger << Logger::error << e.what() << '\n';
-		}
+		catch(const std::exception& e) {}
 	}
 }
 

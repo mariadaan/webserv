@@ -23,6 +23,7 @@ class Response {
 		bool	exceeds_max_body_size();
 		void	handle_cgi_output(std::string const& str);
 		void	handle_cgi_end();
+		void	make_sure_cgi_done();
 
 	private:
 		Client		&_client;

@@ -14,6 +14,9 @@ CGI::CGI(ParsedRequest const& request, Response& response, Client& client, Event
 	, _client(&client)
 	, _event_queue(&event_queue)
 	, _stream_event_handler()
+	, _is_running(false)
+	, _can_receive_input(false)
+	, _can_give_output(false)
 {
 	this->_init_env(request, client);
 	this->_start();
@@ -27,6 +30,9 @@ CGI::CGI(CGI const& src)
 	, _client(src._client)
 	, _event_queue(src._event_queue)
 	, _stream_event_handler(src._get_output_read_fd(), src._get_input_write_fd(), *this, *this)
+	, _is_running(src._is_running)
+	, _can_receive_input(src._can_receive_input)
+	, _can_give_output(src._can_give_output)
 {
 	this->_pipe_fd_input[0] = src._pipe_fd_input[0];
 	this->_pipe_fd_input[1] = src._pipe_fd_input[1];
@@ -45,6 +51,9 @@ CGI& CGI::operator=(CGI const& src) {
 	this->_client = src._client;
 	this->_event_queue = src._event_queue;
 	this->_stream_event_handler = NonBlockingRWStream(this->_get_output_read_fd(), this->_get_input_write_fd(), *this, *this);
+	this->_is_running = src._is_running;
+	this->_can_receive_input = src._can_receive_input;
+	this->_can_give_output = src._can_give_output;
 	return *this;
 }
 
@@ -117,8 +126,10 @@ void CGI::write(char const* buf, size_t count) {
 void CGI::_start() {
 	if (::pipe(this->_pipe_fd_input) == -1)
 		throw std::runtime_error("pipe() failed");
+	this->_can_receive_input = true;
 	if (::pipe(this->_pipe_fd_output) == -1)
 		throw std::runtime_error("pipe() failed");
+	this->_can_give_output = true;
 
 	this->_stream_event_handler = NonBlockingRWStream(this->_get_output_read_fd(), this->_get_input_write_fd(), *this, *this);
 
@@ -137,6 +148,7 @@ void CGI::_start() {
 		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
+	this->_is_running = true;
 	::close(this->_get_input_read_fd());
 	::close(this->_get_output_write_fd());
 }
@@ -149,6 +161,7 @@ HTTP_STATUS_CODES CGI::wait() {
 	::close(this->_pipe_fd_output[0]);
 	int status;
 	::waitpid(this->_pid, &status, 0);
+	this->_is_running = false;
 	if (WIFEXITED(status)) {
 		logger << Logger::info <<  "CGI exited with status " << WEXITSTATUS(status) << std::endl;
 		if (status != EXIT_SUCCESS) {
@@ -194,11 +207,28 @@ void CGI::_read_data(std::string str) {
 
 void CGI::_read_end() {
 	::close(this->_get_output_read_fd());
+	this->_can_give_output = false;
 	this->_event_queue->remove_fd(this->_get_output_read_fd());
 	this->_response->handle_cgi_end();
 }
 
 void CGI::_write_end() {
 	::close(this->_get_input_write_fd());
+	this->_can_receive_input = false;
 	this->_event_queue->remove_fd(this->_get_input_write_fd());
+}
+
+void CGI::make_sure_done() {
+	if (this->_can_receive_input) {
+		::close(this->_get_input_write_fd());
+		this->_can_receive_input = false;
+	}
+	if (this->_can_give_output) {
+		::close(this->_get_output_read_fd());
+		this->_can_give_output = false;
+	}
+	if (this->_is_running) {
+		::waitpid(this->_pid, NULL, 0);
+		this->_is_running = false;
+	}
 }

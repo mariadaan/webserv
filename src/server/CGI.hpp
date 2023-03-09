@@ -20,6 +20,7 @@ public:
 	void end_of_input();
 	HTTP_STATUS_CODES wait();
 	void handle_event(struct kevent& ev_rec);
+	void make_sure_done();
 
 protected:
 	CGI() {};
@@ -35,6 +36,11 @@ private:
 	EventQueue* _event_queue;
 
 	NonBlockingRWStream _stream_event_handler;
+
+	bool _is_running;
+
+	bool _can_receive_input;
+	bool _can_give_output;
 
 	void _start();
 	std::vector<char *> _get_argv() const;

@@ -14,6 +14,8 @@ class EventQueue;
 class Client : private NonBlockingStreamReader, private NonBlockingStreamWriter {
 public:
 	Client(Config& config, Server& server, EventQueue& event_queue, int client_sockfd, sockaddr_in client_address);
+	~Client();
+
 	Config&		config;
 
 	int			get_sockfd(void) const;

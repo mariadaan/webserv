@@ -42,6 +42,8 @@ class Response {
 		size_t	_body_size;
 		bool	_should_add_cgi_to_event_queue;
 
+		std::string _cgi_buffer;
+
 		void	_mark_ready(void);
 
 		bool	_headers_parsed(void) const;

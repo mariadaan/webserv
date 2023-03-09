@@ -14,7 +14,7 @@ public:
 	CGI(ParsedRequest const& request, Client& client);
 	void write(const void *buf, size_t count);
 	void end_of_input();
-	void wait();
+	HTTP_STATUS_CODES wait();
 	int get_output_fd() const;
 
 protected:

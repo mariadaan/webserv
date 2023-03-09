@@ -1,9 +1,11 @@
 #include "CGI.hpp"
 #include "Client.hpp"
 #include "Logger.hpp"
+#include "defines.hpp"
 #include <unistd.h>
 #include <vector>
 #include <cstring>
+#include <signal.h>
 
 CGI::CGI(ParsedRequest const& request, Client &client) {
 	this->_init_env(request, client);
@@ -91,7 +93,6 @@ void CGI::_start() {
 	if (this->_pid == -1) {
 		throw std::runtime_error("fork() failed");
 	}
-
 	if (this->_pid == 0) {
 		::close(this->_pipe_fd_input[1]);
 		::close(this->_pipe_fd_output[0]);
@@ -99,6 +100,7 @@ void CGI::_start() {
 			throw std::runtime_error("dup2() failed");
 		if (::dup2(this->_pipe_fd_output[1], STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
+		::alarm(TIMEOUT_LIMIT);
 		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
@@ -110,8 +112,25 @@ void CGI::end_of_input() {
 	::close(this->_pipe_fd_input[1]);
 }
 
-void CGI::wait() {
+HTTP_STATUS_CODES CGI::wait() {
 	::close(this->_pipe_fd_output[0]);
 	int status;
-	::waitpid(this->_pid, &status, 0); // NOTE: this hangs the entire process, thus no other clients can be served
+	::waitpid(this->_pid, &status, 0);
+	if (WIFEXITED(status)) {
+		logger << Logger::info <<  "CGI exited with status " << WEXITSTATUS(status) << std::endl;
+		if (status != EXIT_SUCCESS) {
+			logger << Logger::error << "Error occured in CGI script" << std::endl;
+			return HTTP_INTERNAL_SERVER_ERROR;
+		}
+		else {
+			logger << Logger::info << "Successfully executed CGI" << std::endl;
+			return HTTP_OK;
+		}
+	} else if (WIFSIGNALED(status)) {
+		logger << Logger::info <<  "CGI terminated by signal " << WTERMSIG(status) << std::endl;
+		if (status == SIGALRM) {
+			return HTTP_TIMEOUT;
+		}
+	}
+	return HTTP_INTERNAL_SERVER_ERROR;
 }

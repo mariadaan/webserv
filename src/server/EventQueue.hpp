@@ -23,17 +23,17 @@ public:
 
 	void add_read_event_listener(int sockfd);
 	void add_write_event_listener(int sockfd);
-	void add_cgi_event_listener(int cgi_fd, int client_sockfd);
+	void add_cgi_event_listener(int cgi_input_fd, int cgi_output_fd, int client_sockfd);
+	void remove_fd(int fd);
 	void event_loop(void);
 
 	void accept_client_on(Server &server);
-	void remove_event_listener(int sockfd);
 
 private:
 	int _kq;
 	std::map<int, Server *> _servers;
-	std::map<int, int> _client_server;
-	std::map<int, int> _cgi_client;
+	std::map<int, int> _client_to_server;
+	std::map<int, int> _cgi_to_client;
 };
 
 #endif

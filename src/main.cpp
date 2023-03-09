@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 		EventQueue keventQueue;
 		try {
 			for (std::vector<Config>::iterator it = config.server_blocks.begin(); it < config.server_blocks.end(); it++) {
-				Server *serverSocket = new Server(*it, PF_INET, SOCK_STREAM, 0);
+				Server *serverSocket = new Server(*it, keventQueue, PF_INET, SOCK_STREAM, 0);
 
 				logger << Logger::info << "Starting server on port " << (*it).get_port() << std::endl;
 

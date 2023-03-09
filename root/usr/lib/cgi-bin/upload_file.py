@@ -9,9 +9,17 @@ print("Content-type: text/html", end="\r\n\r\n")
 # Get the data from the form
 form = cgi.FieldStorage()
 
-ctype, pdict = cgi.parse_header(os.environ["CONTENT_TYPE"])
-if "boundary" in pdict:
-	pdict["boundary"] = pdict["boundary"].encode()
+if "CONTENT_TYPE" in os.environ:
+	ctype, pdict = cgi.parse_header(os.environ["CONTENT_TYPE"])
+	if "boundary" in pdict:
+		pdict["boundary"] = pdict["boundary"].encode()
+	else:
+		exit(0)
+else:
+	print("<html><body>")
+	print("<p>Error: no file was uploaded</p>")
+	print("</body></html>")
+	exit(0)
 
 cgi.parse_multipart(sys.stdin, pdict)
 

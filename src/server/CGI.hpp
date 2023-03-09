@@ -4,19 +4,21 @@
 
 #include "Optional.hpp"
 #include "NonBlockingRWStream.hpp"
+#include "enums.hpp"
 #include <map>
 #include <vector>
 
 class Client;
 class ParsedRequest;
+class Response;
 class CGI : private NonBlockingStreamReader, private NonBlockingStreamWriter {
 public:
-	CGI(ParsedRequest const& request, Client& client, EventQueue& event_queue);
+	CGI(ParsedRequest const& request, Response& response, Client& client, EventQueue& event_queue);
 	CGI(CGI const& src);
 	CGI& operator=(CGI const& src);
 	void write(char const* buf, size_t count);
 	void end_of_input();
-	void wait();
+	HTTP_STATUS_CODES wait();
 	void handle_event(struct kevent& ev_rec);
 
 protected:
@@ -28,6 +30,7 @@ private:
 	std::map<std::string, std::string> _env;
 	pid_t _pid;
 
+	Response* _response;
 	Client* _client;
 	EventQueue* _event_queue;
 

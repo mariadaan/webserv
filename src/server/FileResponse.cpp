@@ -197,8 +197,14 @@ void FileResponse::generate_response(void) {
 	}
 	if (this->_status_code >= 400) {
 		this->_file_dir = config.get_root() + "/";
-		this->_filename = this->_file_dir + this->config.get_error_page(this->_status_code);
-		this->load_page_content();
+		try {
+			this->_filename = this->_file_dir + this->config.get_error_page(this->_status_code);
+			this->load_page_content();
+		}
+		catch(const std::exception& e) {
+			this->_filename = "";
+			this->_page_content = "Error " + std::to_string(this->_status_code);
+		}
 	}
 	this->define_content_type();
 }

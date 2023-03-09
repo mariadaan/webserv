@@ -64,7 +64,7 @@ Config::Config(std::vector<std::string> &server_vector)
 	}
 	if (_server_names.empty())
 		throw std::runtime_error("No server name(s) defined in the server block listening on port " + std::to_string(_port));
-		
+
 }
 
 // ---------------------------------- SETTERS -----------------------------------------
@@ -335,8 +335,10 @@ std::map<int,std::string>	return_default_error_map(void)
 	error[403] = "error_pages/403.html";
 	error[404] = "error_pages/404.html";
 	error[405] = "error_pages/405.html";
+	error[408] = "error_pages/408.html";
 	error[413] = "error_pages/413.html";
 	error[500] = "error_pages/500.html";
+	error[501] = "error_pages/501.html";
 	error[505] = "error_pages/505.html";
 	return (error);
 }

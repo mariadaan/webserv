@@ -21,6 +21,8 @@ class Response {
 		bool	has_error_status() const;
 		void	handle_cgi_event(struct kevent& ev_rec);
 		bool	exceeds_max_body_size();
+		void	handle_cgi_output(std::string const& str);
+		void	handle_cgi_end();
 
 	private:
 		Client		&_client;
@@ -39,6 +41,8 @@ class Response {
 		HTTP_STATUS_CODES	_status_code;
 
 		size_t	_body_size;
+
+		std::string _cgi_buffer;
 
 		void	_mark_ready(void);
 

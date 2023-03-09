@@ -2,21 +2,167 @@
 <html>
 
 <head>
-	<title>Evaluation Checklist</title>
+	<title>Eval guide</title>
+	<link rel="stylesheet" href="/eval/eval_guide.css">
 </head>
 
 <body>
-	<h2>Webserv Evaluation</h2>
-	<!-- TO DO: hier curl commands zetten voor elk onderdeel om het te testen, of links naar de webpagina waar we het kunnen laten zien -->
+	<h1>Webserv Testing</h1>
+
+	<header>
+		<h3>Webserver general information</h3>
+	</header>
 	<ul>
-		<li><a href="#check-code-questions">Check the code and ask questions</a></li>
-		<li><a href="#configuration">Configuration</a></li>
-		<li><a href="#basic-checks">Basic checks</a></li>
-		<li><a href="#check-cgi">Check CGI</a></li>
-		<li><a href="#check-with-browser">Check with a browser</a></li>
-		<li><a href="#port-issues">Port issues</a></li>
-		<li><a href="#siege-stress-test">Siege &amp; stress test</a></li>
-		<!-- siege -b http://localhost:80/empty_page.html -->
+		<li><a href="/http_basics.html">HTTP protocol basics</a></li>
+		<li><a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">List of HTTP status codes</a></li>
+		<li><a href="https://www.notion.so/Multiplexing-6782e2b32ba24a018a017a848f382989">I/O Multiplexing (kqueue)</a></li>
 	</ul>
+	<br>
+
+	<header>
+		<h3>Configuration</h3>
+	</header>
+		<p>Setup multiple servers with different hostnames</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl --resolve le_site.com:8080:127.0.0.1 http://le_site.com/</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Change the default error page in the config file. Then, run this command to check whether it actually uses the changed error page</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl localhost:8080/blabla_random</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Sending a request that is larger than the client max body size </p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl http://localhost:8080/posting -X POST -H "Content-Type: plain/text" --data "This body is too long because in the /posting location, only 40 bytes are allowed"</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Sending a request that is not larger than the client max body size </p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl http://localhost:8080/posting -X POST -H "Content-Type: plain/text" --data "This body is not too long"</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>If a location has a root, it will direct the client to re requested path with that root instead of the default one. Test with this command:</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl localhost:8080/images/</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+	<br>
+
+	<header>
+		<h3>Test allowed methods</h3>
+	</header>
+		<p>Unallowed DELETE at location posting</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl -X DELETE localhost:8080/posting</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Allowed DELETE at location uploads/</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl -X DELETE localhost:8080/uploads/</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+	<br>
+
+	<header>
+		<h3>Test basic requests</h3>
+	</header>
+			<p>Most basic GET request</p>
+			<div class="black-box">
+				<div class="white-text  text-to-copy" id="textToCopy">curl localhost:8080</div>
+				<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+			</div>
+			<p>Most basic POST request</p>
+			<div class="black-box">
+				<div class="white-text  text-to-copy" id="textToCopy">curl -X POST localhost:8080/posting --data "hallo"</div>
+				<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+			</div>
+			<p>Most basic DELETE request</p>
+			<div class="black-box">
+				<div class="white-text  text-to-copy" id="textToCopy">curl -X DELETE localhost:8080/uploads/</div>
+				<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+			</div>
+			<p>Test behavior with unknown methods</p>
+			<div class="black-box">
+				<div class="white-text  text-to-copy" id="textToCopy">curl -X UNKNOWN localhost:8080</div>
+				<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+			</div>
+			<div class="black-box">
+				<div class="white-text  text-to-copy" id="textToCopy">curl -X RANDOM localhost:8080</div>
+				<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+			</div>
+		<br>
+
+	<header>
+		<h3>Test CGI</h3>
+	</header>
+		<p>Our CGI can handle GET, POST, and DELETE methods. Test them all on this page:</p>
+		<div class="black-box">
+			<div class="white-text"><a href="http://localhost:8080/upload">http://localhost:8080/upload</a></div>
+		</div>
+		<p>When an error occurs in a CGI script, the error is handled properly. Test with these commands:</p>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl localhost:8080/error.py</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<div class="black-box">
+			<div class="white-text  text-to-copy" id="textToCopy">curl localhost:8080/infinite_loop.py</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+	<br>
+
+	<header>
+		<h3>In browser tests</h3>
+	</header>
+		<p>Go have fun!</p>
+		<div class="black-box">
+			<div class="white-text"><a href="http://localhost:8080">http://localhost:8080</a></div>
+		</div>
+		<p>Wrong URL</p>
+		<div class="black-box">
+			<div class="white-text"><a href="http://localhost:8080/aiodjei">http://localhost:8080/aiodjei</a></div>
+		</div>
+		<p>Directory listing</p>
+		<div class="black-box">
+			<div class="white-text"><a href="http://localhost:8080/others/">http://localhost:8080/others/</a></div>
+		</div>
+		<p>Redirection</p>
+		<div class="black-box">
+			<div class="white-text"><a href="http://localhost:8080/multimedia">http://localhost:8080/multimedia</a></div>
+		</div>
+	<br>
+
+	<header>
+		<h3>Test with siege</h3>
+	</header>
+		<p>Stress test the server: open 100 connections</p>
+		<div class="black-box">
+			<div class="white-text" id="textToCopy">siege -c 100  http://localhost:8080</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Test the server in benchmark mode, doing GET requests on an empty page.</p>
+		<div class="black-box">
+			<div class="white-text" id="textToCopy">siege -b http://localhost:8080/empty_page.html</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Test for memory usage during utilisation of webserver by running this command while siege is still running</p>
+		<div class="black-box">
+			<div class="white-text" id="textToCopy">top</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+		<p>Test for memory leaks after running siege, while webserv is still running</p>
+		<div class="black-box">
+			<div class="white-text" id="textToCopy">leaks webserv</div>
+			<button class="copy-button"  onclick="copyText(event)">Copy command</button>
+		</div>
+	<br><br><br><br>
+
+	<script>
+		function copyText(event) {
+		const textToCopy = event.target.previousElementSibling.textContent;
+		navigator.clipboard.writeText(textToCopy);
+		}
+		</script>
+
 </body>
 </html>

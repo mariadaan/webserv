@@ -22,7 +22,8 @@ Response::Response(Config &config, Client &client, EventQueue& event_queue)
 	, _cgi()
 	, _ready(PARSING)
 	, _status_code(HTTP_OK)
-	, _body_size(0) {
+	, _body_size(0)
+	, _cgi_buffer("") {
 }
 
 void Response::_mark_ready(void) {
@@ -82,31 +83,18 @@ bool Response::exceeds_max_body_size() {
 
 void Response::_handle_request() {
 	if (!this->_request.is_allowed_method) {
-		logger << Logger::info << "Method not allowed" << std::endl;
-
-		this->_status_code = HTTP_METHOD_NOT_ALLOWED;
-		// this->_mark_ready();
-		// return;
+		if (this->_request.method != GET && this->_request.method != POST && this->_request.method != DELETE) {
+			this->_status_code = HTTP_NOT_IMPLEMENTED;
+		}
+		else {
+			this->_status_code = HTTP_METHOD_NOT_ALLOWED;
+		}
 	}
 
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
 	if (this->_request.location.is_set()) {
 		logger << Logger::debug << "With Location: \n";
 		this->_request.location.print_location_class();
-	}
-
-	if (!this->_request.get_script_name().empty()) {
-		if (this->_request.has_header("content-length") && this->exceeds_max_body_size()) {
-			logger << Logger::warn << "File too large! \n";
-			// don't go to cgi
-		}
-		else {
-			this->_cgi = Optional<CGI>(CGI(this->_request, this->_client, this->_event_queue));
-			this->_send_status();
-		}
-	}
-	else {
-		// TODO: maybe do something for non-cgi requests
 	}
 
 	if (this->_request.has_header("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
@@ -137,6 +125,20 @@ void Response::_handle_request() {
 				this->_handle_body(body);
 			}
 		}
+	}
+
+	if (!this->has_error_status()) {
+		if (!this->_request.get_script_name().empty()) {
+			if (this->_request.has_header("content-length") && this->exceeds_max_body_size()) {
+				logger << Logger::warn << "File too large! \n";
+				// don't go to cgi
+			}
+			else {
+				this->_cgi = Optional<CGI>(CGI(this->_request, *this, this->_client, this->_event_queue));
+			}
+		}
+	} else {
+		this->_mark_ready();
 	}
 }
 
@@ -222,9 +224,6 @@ void Response::handle_part(std::string const &received) {
 	if (!this->_headers_parsed()) {
 		this->_build_request(received);
 		if (this->_headers_parsed()) {
-			if (this->_request.path == "/upload_file.py") {
-				logger << Logger::debug << "Trying to upload file" << std::endl;
-			}
 			this->_handle_request();
 		}
 	}
@@ -269,13 +268,13 @@ void Response::_send_status() {
 
 bool Response::send() {
 	if (this->_ready == SENT) {
-		return (!this->_go_to_cgi());
+		return (false);
 	}
 	this->_ready = SENT;
 	if (this->has_error_status()) {
 		logger << Logger::info << "Sending error response "<< this->_status_code << std::endl;
 		this->_send_error_response();
-		return (!this->_go_to_cgi());
+		return (true);
 	}
 
 	if (this->_go_to_cgi()) {
@@ -299,19 +298,22 @@ bool Response::has_error_status() const {
 	return (this->_status_code >= 400);
 }
 
+void Response::handle_cgi_output(std::string const& str) {
+	this->_cgi_buffer += str;
+}
+
+void Response::handle_cgi_end() {
+	this->_status_code = this->_cgi.wait();
+	if (this->has_error_status()) {
+		this->_send_error_response();
+	}
+	else {
+		this->_send_status();
+		this->_client.send(this->_cgi_buffer);
+	}
+	this->_client.close();
+}
+
 void Response::handle_cgi_event(struct kevent& ev_rec) {
 	this->_cgi.handle_event(ev_rec);
-
-
-	// logger << Logger::debug << "Can read " << ev_rec.data << " bytes" << std::endl;
-	// char *buf = new char[ev_rec.data];
-	// ssize_t bytes_read = ::read(ev_rec.ident, buf, ev_rec.data);
-	// std::string received(buf, bytes_read);
-	// delete[] buf;
-	// this->_client.send(received);
-	// if (ev_rec.flags & EV_EOF) {
-	// 	this->_client.close();
-	// 	this->_cgi.wait();
-	// 	return ;
-	// }
 }

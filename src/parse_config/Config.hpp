@@ -31,11 +31,10 @@ class Config
 			ERROR_PAGE,
 			CGI
 		};
-
+		bool	port_defined;
 		//constructors
-		Config();
 		~Config();
-		Config& operator=(Config other); //copy and swap idiom 	(not needed yet)
+		Config& operator=(Config other);
 		Config(std::vector<std::string> &server_vector);
 
 		//getters

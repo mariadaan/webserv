@@ -1,19 +1,51 @@
 #include "CGI.hpp"
 #include "Client.hpp"
 #include "Logger.hpp"
+#include "EventQueue.hpp"
+#include "Response.hpp"
 #include "defines.hpp"
 #include <unistd.h>
 #include <vector>
 #include <cstring>
 #include <signal.h>
 
-CGI::CGI(ParsedRequest const& request, Client &client) {
+CGI::CGI(ParsedRequest const& request, Response& response, Client& client, EventQueue& event_queue)
+	: _response(&response)
+	, _client(&client)
+	, _event_queue(&event_queue)
+	, _stream_event_handler()
+{
 	this->_init_env(request, client);
 	this->_start();
+	event_queue.add_cgi_event_listener(this->_get_input_write_fd(), this->_get_output_read_fd(), client.get_sockfd());
 }
 
-int CGI::get_output_fd() const {
-	return this->_pipe_fd_output[0];
+CGI::CGI(CGI const& src)
+	: _env(src._env)
+	, _pid(src._pid)
+	, _response(src._response)
+	, _client(src._client)
+	, _event_queue(src._event_queue)
+	, _stream_event_handler(src._get_output_read_fd(), src._get_input_write_fd(), *this, *this)
+{
+	this->_pipe_fd_input[0] = src._pipe_fd_input[0];
+	this->_pipe_fd_input[1] = src._pipe_fd_input[1];
+	this->_pipe_fd_output[0] = src._pipe_fd_output[0];
+	this->_pipe_fd_output[1] = src._pipe_fd_output[1];
+}
+
+CGI& CGI::operator=(CGI const& src) {
+	this->_pipe_fd_input[0] = src._pipe_fd_input[0];
+	this->_pipe_fd_input[1] = src._pipe_fd_input[1];
+	this->_pipe_fd_output[0] = src._pipe_fd_output[0];
+	this->_pipe_fd_output[1] = src._pipe_fd_output[1];
+	this->_env = src._env;
+	this->_pid = src._pid;
+	this->_response = src._response;
+	this->_client = src._client;
+	this->_event_queue = src._event_queue;
+	this->_stream_event_handler = NonBlockingRWStream(this->_get_output_read_fd(), this->_get_input_write_fd(), *this, *this);
+	return *this;
 }
 
 void CGI::_init_env(ParsedRequest const& request, Client &client) {
@@ -42,10 +74,9 @@ void CGI::_init_env(ParsedRequest const& request, Client &client) {
 			this->_env["UPLOAD_PATH"] = client.config.get_root() + request.location.get_upload();
 		}
 	}
-	catch(const std::exception& e) {
+	catch (const std::exception& e) {
 		logger << Logger::error << "Error setting environment variables for CGI: " << e.what() << std::endl;
 	}
-	
 }
 
 std::vector<char *> CGI::_get_envp() const {
@@ -79,8 +110,8 @@ std::vector<char *> CGI::_get_argv() const {
 	return converted_argv;
 }
 
-void CGI::write(const void *buf, size_t count) { // TODO: How does this interact with non-blocking write?
-	::write(this->_pipe_fd_input[1], buf, count);
+void CGI::write(char const* buf, size_t count) {
+	this->_stream_event_handler.write((char *)buf, count);
 }
 
 void CGI::_start() {
@@ -89,27 +120,29 @@ void CGI::_start() {
 	if (::pipe(this->_pipe_fd_output) == -1)
 		throw std::runtime_error("pipe() failed");
 
+	this->_stream_event_handler = NonBlockingRWStream(this->_get_output_read_fd(), this->_get_input_write_fd(), *this, *this);
+
 	this->_pid = ::fork();
 	if (this->_pid == -1) {
 		throw std::runtime_error("fork() failed");
 	}
 	if (this->_pid == 0) {
-		::close(this->_pipe_fd_input[1]);
-		::close(this->_pipe_fd_output[0]);
-		if (::dup2(this->_pipe_fd_input[0], STDIN_FILENO) == -1)
+		::close(this->_get_input_write_fd());
+		::close(this->_get_output_read_fd());
+		if (::dup2(this->_get_input_read_fd(), STDIN_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
-		if (::dup2(this->_pipe_fd_output[1], STDOUT_FILENO) == -1)
+		if (::dup2(this->_get_output_write_fd(), STDOUT_FILENO) == -1)
 			throw std::runtime_error("dup2() failed");
 		::alarm(TIMEOUT_LIMIT);
 		::execve(this->_env.at("SCRIPT_NAME").c_str(), this->_get_argv().data(), this->_get_envp().data());
 		throw std::runtime_error("execve() failed");
 	}
-	::close(this->_pipe_fd_input[0]);
-	::close(this->_pipe_fd_output[1]);
+	::close(this->_get_input_read_fd());
+	::close(this->_get_output_write_fd());
 }
 
 void CGI::end_of_input() {
-	::close(this->_pipe_fd_input[1]);
+	this->_stream_event_handler.close();
 }
 
 HTTP_STATUS_CODES CGI::wait() {
@@ -133,4 +166,39 @@ HTTP_STATUS_CODES CGI::wait() {
 		}
 	}
 	return HTTP_INTERNAL_SERVER_ERROR;
+}
+
+void CGI::handle_event(struct kevent& ev_rec) {
+	this->_stream_event_handler.handle_event(ev_rec);
+}
+
+int CGI::_get_input_read_fd() const {
+	return this->_pipe_fd_input[0];
+}
+
+int CGI::_get_input_write_fd() const {
+	return this->_pipe_fd_input[1];
+}
+
+int CGI::_get_output_read_fd() const {
+	return this->_pipe_fd_output[0];
+}
+
+int CGI::_get_output_write_fd() const {
+	return this->_pipe_fd_output[1];
+}
+
+void CGI::_read_data(std::string str) {
+	this->_response->handle_cgi_output(str);
+}
+
+void CGI::_read_end() {
+	::close(this->_get_output_read_fd());
+	this->_event_queue->remove_fd(this->_get_output_read_fd());
+	this->_response->handle_cgi_end();
+}
+
+void CGI::_write_end() {
+	::close(this->_get_input_write_fd());
+	this->_event_queue->remove_fd(this->_get_input_write_fd());
 }

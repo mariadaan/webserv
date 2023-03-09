@@ -4,8 +4,9 @@
 #include "Config.hpp"
 #include <fcntl.h>
 
-Server::Server(Config &config, int domain, int socketType, int protocol)
+Server::Server(Config& config, EventQueue& event_queue, int domain, int socketType, int protocol)
 	: config(config)
+	, _event_queue(event_queue)
 	, _domain(domain)
 	, _socket_type(socketType)
 	, _protocol(protocol)
@@ -13,8 +14,14 @@ Server::Server(Config &config, int domain, int socketType, int protocol)
 	this->_server_sockfd = socket(_domain, _socket_type, _protocol);
 	if (this->_server_sockfd < 0)
 		throw std::runtime_error("Error creating socket");
-	if (fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
+	if (::fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
 		throw (std::runtime_error("Error setting socket to non-blocking"));
+}
+
+Server::~Server() {
+	for (std::map<int, Client *>::iterator it = this->_clients.begin(); it != this->_clients.end(); it++) {
+		delete it->second;
+	}
 }
 
 void Server::set_address(void) {
@@ -41,7 +48,7 @@ Client &Server::accept() {
 	int client_sockfd = ::accept(this->_server_sockfd, (sockaddr *)&client_address, &client_len);
 	if (client_sockfd < 0)
 		throw std::runtime_error("Error accepting connection");
-	Client *client = new Client(this->config, *this, client_sockfd, client_address);
+	Client *client = new Client(this->config, *this, this->_event_queue, client_sockfd, client_address);
 	this->_clients[client_sockfd] = client;
 	return *(this->_clients.at(client_sockfd));
 }
@@ -65,4 +72,5 @@ std::map<int, Client *> &Server::get_clients() {
 
 void Server::remove_client(int client_sockfd) {
 	delete this->_clients.at(client_sockfd);
+	this->_clients.erase(client_sockfd);
 }

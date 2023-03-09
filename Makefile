@@ -6,7 +6,7 @@
 #    By: mvan-wij <mvan-wij@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2023/01/12 14:40:00 by mvan-wij      #+#    #+#                  #
-#    Updated: 2023/02/22 18:29:39 by mvan-wij      ########   odam.nl          #
+#    Updated: 2023/03/09 11:00:02 by mvan-wij      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ NAME		:= webserv
 NAME_BONUS	:= webserv
 
 CC			:= c++
-CFLAGS		+= -Wall -Wextra -std=c++98 -pedantic -Ofast $(if $(DEBUG), -g3) $(if $(SANITIZE), -fsanitize=address -g3)
+CFLAGS		+= -Wall -Wextra -std=c++98 -pedantic $(if $(DEBUG),,$(if $(SANITIZE),,-Ofast)) $(if $(DEBUG), -g3) $(if $(SANITIZE), -fsanitize=address -g3)
 
 ################################################################################
 
@@ -27,24 +27,19 @@ SOURCES += $(shell find src -name '*.cpp')
 
 ################################################################################
 
-ifdef BONUS
-NAME	:= $(NAME_BONUS)
-HEADERS +=
-SOURCES	+=
-CFLAGS	+= -DBONUS
-endif
-
-ifdef DEBUG
-CFLAGS	+= -g3 -DDEBUG
-endif
-
-################################################################################
-
 HEADERS := $(sort $(HEADERS))
 
 OBJDIR := obj
 OBJECTS := $(addprefix $(OBJDIR)/, $(SOURCES:cpp=o))
 INCLUDE_FLAGS += $(addprefix -I, $(sort $(dir $(HEADERS))))
+
+export CFLAGS := $(sort $(CFLAGS))
+
+DATA_FILE := .make_data.txt
+MAKE_DATA := $(shell uname) $(CFLAGS)
+ifneq ($(shell echo $(MAKE_DATA)), $(shell cat "$(DATA_FILE)" 2> /dev/null))
+PRE_RULES := clean
+endif
 
 ################################################################################
 
@@ -58,13 +53,14 @@ exec_no_nl = printf "$(1)$(CLEAR_REST_OF_LINE)\n"; $(1); printf "\e[A"
 
 ################################################################################
 
-all: $(NAME)
+all: $(PRE_RULES) $(NAME)
 
 $(NAME): $(OBJECTS)
 	@$(call print_prefix,"$(PROJECT)","make")
 	$(CC) $(CFLAGS) $(OBJECTS) -o $(NAME)
 	@$(call print_prefix,"$(PROJECT)","make")
 	@printf "$(BLUE_FG)$(NAME)$(RESET_COLOR) created\n"
+	@echo $(MAKE_DATA) > $(DATA_FILE)
 
 -include $(OBJECTS:.o=.d)
 

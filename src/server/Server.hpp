@@ -14,7 +14,8 @@
 class Server
 {
 public:
-	Server(Config &config, int domain, int socketType, int protocol);
+	Server(Config& config, EventQueue& event_queue, int domain, int socketType, int protocol);
+	~Server();
 
 	Config	&config;
 
@@ -29,13 +30,16 @@ public:
 	void	remove_client(int client_sockfd);
 
 private:
-	int						_server_sockfd;
-	int						_domain;
-	int						_socket_type;
-	int						_protocol;
-	sockaddr_in				_address;
-	int						_backlog;
-	std::map<int, Client *>	_clients;
+	EventQueue&	_event_queue;
+
+	int			_server_sockfd;
+	int			_domain;
+	int			_socket_type;
+	int			_protocol;
+	sockaddr_in	_address;
+	int			_backlog;
+
+	std::map<int, Client*>	_clients;
 };
 
 #endif

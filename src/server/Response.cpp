@@ -111,7 +111,7 @@ void Response::_handle_request() {
 			}
 		}
 		else {
-			if (this->_get_body().size() != 0) {
+			if (this->_get_body().size() != 0 || this->_request.get_content_length() == 0) {
 				std::string body = this->_get_body();
 				this->_get_body() = "";
 				this->_handle_body(body);

@@ -135,7 +135,7 @@ bool FileResponse::exceeds_max_body_size() {
 	if (max_body_size == 0) {
 		return false;
 	}
-	if (this->request.get_content_length() > max_body_size) {
+	if (this->request.has_header("content-length") && this->request.get_content_length() > max_body_size) {
 		return true;
 	}
 	else {
@@ -174,6 +174,10 @@ void FileResponse::generate_response(void) {
 		if (this->exceeds_max_body_size()) {
 			this->_status_code = HTTP_ENTITY_TOO_LARGE;
 			this->_page_content = "Request entity too large\r\n";
+		}
+		else if (!this->request.has_header("content-length") || this->request.get_content_length() == 0) {
+			this->_status_code = HTTP_NO_CONTENT;
+			this->_page_content = "No content\r\n";
 		}
 		else {
 			this->_status_code = HTTP_OK;

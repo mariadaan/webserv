@@ -1,5 +1,6 @@
 #include "Location.hpp"
 #include "Config.hpp"
+#include "Logger.hpp"
 // #include "configParser.hpp"
 
 //                       **********************************************
@@ -95,14 +96,14 @@ void	Location::set_max_size(size_t size){
 //prints out a Location class
 void	Location::print_location_class(void)
 {
-	std::cout << "index : " << this->get_index() << std::endl;
+	logger << Logger::info << "index : " << this->get_index() << std::endl;
 	if (this->get_auto_index())
-		std::cout << "autoindex : on" << std::endl;
+		logger << Logger::info << "autoindex : on" << std::endl;
 	else
-		std::cout << "autoindex : off" << std::endl;
+		logger << Logger::info << "autoindex : off" << std::endl;
 	for (std::map<std::string,bool>::const_iterator it = _request_methods.begin(); it != _request_methods.end(); it++)
-		std::cout << it->first << " : " << it->second << std::endl;
-	std::cout << "upload : " << this->get_upload() << std::endl;
-	std::cout << "root : " << _root << std::endl;
-	std::cout << "maxBody : " << std::to_string(_max_size) << std::endl << std::endl;
+		logger << Logger::info << it->first << " : " << it->second << std::endl;
+	logger << Logger::info << "upload : " << this->get_upload() << std::endl;
+	logger << Logger::info << "root : " << _root << std::endl;
+	logger << Logger::info << "maxBody : " << std::to_string(_max_size) << std::endl << std::endl;
 }

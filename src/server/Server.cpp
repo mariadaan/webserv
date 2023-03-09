@@ -13,8 +13,8 @@ Server::Server(Config &config, int domain, int socketType, int protocol)
 	this->_server_sockfd = socket(_domain, _socket_type, _protocol);
 	if (this->_server_sockfd < 0)
 		throw std::runtime_error("Error creating socket");
-	// if (fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
-	// 	throw (std::runtime_error("Error setting socket to non-blocking"));
+	if (fcntl(this->_server_sockfd, F_SETFL, O_NONBLOCK))
+		throw (std::runtime_error("Error setting socket to non-blocking"));
 }
 
 void Server::set_address(void) {

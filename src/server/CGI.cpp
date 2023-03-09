@@ -75,7 +75,7 @@ void CGI::_init_env(ParsedRequest const& request, Client &client) {
 		}
 	}
 	catch (const std::exception& e) {
-		logger << Logger::error << "Error setting environment variables for CGI: " << e.what() << std::endl;
+		logger << Logger::warn << "Error setting environment variables for CGI: " << e.what() << std::endl;
 	}
 }
 
@@ -152,7 +152,7 @@ HTTP_STATUS_CODES CGI::wait() {
 	if (WIFEXITED(status)) {
 		logger << Logger::info <<  "CGI exited with status " << WEXITSTATUS(status) << std::endl;
 		if (status != EXIT_SUCCESS) {
-			logger << Logger::error << "Error occured in CGI script" << std::endl;
+			logger << Logger::warn << "Error occured in CGI script" << std::endl;
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		else {
@@ -160,7 +160,7 @@ HTTP_STATUS_CODES CGI::wait() {
 			return HTTP_OK;
 		}
 	} else if (WIFSIGNALED(status)) {
-		logger << Logger::info <<  "CGI terminated by signal " << WTERMSIG(status) << std::endl;
+		logger << Logger::warn <<  "CGI terminated by signal " << WTERMSIG(status) << std::endl;
 		if (status == SIGALRM) {
 			return HTTP_TIMEOUT;
 		}

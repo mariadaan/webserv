@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 				logger << Logger::info << "Listening on port " << (*it).get_port() << ": http://localhost:" << (*it).get_port() << std::endl;
 				keventQueue.add_server(serverSocket);
 			}
+			// logger.filter(Logger::warn);
 			keventQueue.event_loop();
 			keventQueue.close_servers();
 		}

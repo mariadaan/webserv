@@ -39,13 +39,11 @@ bool Response::_go_to_cgi(void) const {
 	return (this->_cgi.is_set());
 }
 
-// when the request does not include a cgi
 void Response::_send_file_response(void) {
 	FileResponse file_response(this->_config, this->_request);
 	std::string response = file_response.get_response();
 	this->_client.send(response);
 	logger << Logger::info << "Response sent" << std::endl;
-	// logger << Logger::debug << response << std::endl;;
 }
 
 void Response::_build_request(std::string const &received) {
@@ -92,11 +90,6 @@ void Response::_handle_request() {
 	}
 
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;
-	if (this->_request.location.is_set()) {
-		logger << Logger::debug << "With Location: \n";
-		this->_request.location.print_location_class();
-	}
-
 	if (this->_request.has_header("expect") != 0 && this->_request.headers["expect"] == "100-continue") {
 		std::string response = "HTTP/1.1 " + util::get_response_status(HTTP_CONTINUE) + CRLF + CRLF;
 		this->_client.send(response);
@@ -112,14 +105,13 @@ void Response::_handle_request() {
 				this->_status_code = HTTP_BAD_REQUEST;
 			}
 			this->_get_body() = "";
-			// this->_finish_request();
-			this->_mark_ready(); // TODO: does this need to be here?
+			this->_mark_ready();
 			if (this->_go_to_cgi()) {
 				this->_cgi.end_of_input();
 			}
 		}
 		else {
-			if (this->_get_body().size() != 0) {
+			if (this->_get_body().size() != 0 || this->_request.get_content_length() == 0) {
 				std::string body = this->_get_body();
 				this->_get_body() = "";
 				this->_handle_body(body);
@@ -131,7 +123,6 @@ void Response::_handle_request() {
 		if (!this->_request.get_script_name().empty()) {
 			if (this->_request.has_header("content-length") && this->exceeds_max_body_size()) {
 				logger << Logger::warn << "File too large! \n";
-				// don't go to cgi
 			}
 			else {
 				this->_cgi = Optional<CGI>(CGI(this->_request, *this, this->_client, this->_event_queue));
@@ -155,13 +146,11 @@ void Response::_handle_body_chunks(std::string const &received) {
 	for (std::vector<Chunk>::const_iterator chunk_it = chunks.begin(); chunk_it < chunks.end(); chunk_it++) {
 		if (chunk_it->get_size() == 0) {
 			logger << Logger::info << "Got last chunk" << std::endl;
-			// this->_finish_request();
 			this->_mark_ready();
 
 			if (this->_go_to_cgi()) {
 				this->_cgi.end_of_input();
 			}
-
 			return ;
 		}
 
@@ -198,29 +187,9 @@ void Response::_handle_body(std::string const &received) {
 			this->_get_body() += received;
 		}
 	}
-
-	// if (this->_body_size >= this->_request.get_content_length()) {
-	// 	received.resize(this->_request.get_content_length() - this->_body_size);
-	// }
-
-
-	// this->_get_body() += received;
-	// logger << Logger::info;
-	// logger << "Got part:" << std::endl;
-	// logger << "---------------" << std::endl;
-	// logger << received << std::endl;
-	// logger << "---------------" << std::endl;
-	// if (this->_get_body().size() >= this->_request.get_content_length()) {
-	// 	this->_get_body().resize(this->_request.get_content_length()); // TODO: check if ok
-	// 	// this->_finish_request();
-	// 	this->_ready = true;
-	// }
 }
 
 void Response::handle_part(std::string const &received) {
-	// if (this->_ready == SENT) {
-	// 	return ;
-	// }
 	if (!this->_headers_parsed()) {
 		this->_build_request(received);
 		if (this->_headers_parsed()) {
@@ -279,9 +248,6 @@ bool Response::send() {
 
 	if (this->_go_to_cgi()) {
 		logger << Logger::debug << "Going to CGI" << std::endl;
-		// if (!this->_request.is_chunked) {
-		// 	this->_cgi.write(this->_request.body.c_str(), this->_request.body.size());
-		// }
 		return (false);
 	}
 	else {

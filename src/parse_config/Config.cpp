@@ -1,6 +1,8 @@
 #include "Config.hpp"
 #include "ParsedConfigFile.hpp"
+#include "Logger.hpp"
 // #include "configParser.hpp"
+
 
 //                 **********************************************
 //                 **************** CONFIG CLASS ****************
@@ -9,14 +11,6 @@
 
 // -------------------------------- CONSTRUCTORS ---------------------------------
 
-
-Config::Config()
-//Default constructor
-{
-	_port = 80;
-	_max_size = 1;
-	_error_pages = return_default_error_map();
-}
 
 //No dynamically allocated memmory in the class so destructor is empty
 Config::~Config(){}
@@ -28,12 +22,18 @@ Config::~Config(){}
 //The copy and swap idiom has multiple benifits (look up if interested)
 Config& Config::operator=(Config other)
 {
-	std::swap(*this, other);
+	this->_port = other._port;
+	this->_max_size = other._max_size;
+	this->_server_names = other._server_names;
+	this->_root = other._root;
+	this->_cgi = other._cgi;
+	this->_locations = other._locations;
+	this->_error_pages = other._error_pages;
 	return *this;
 }
 
 Config::Config(std::vector<std::string> &server_vector)
-	: _port(80), _max_size(0), _error_pages(return_default_error_map())
+	: _max_size(0), _error_pages(return_default_error_map()), port_defined(false)
 {
 	Config::conf_parser	enum_value;
 
@@ -64,7 +64,8 @@ Config::Config(std::vector<std::string> &server_vector)
 	}
 	if (_server_names.empty())
 		throw std::runtime_error("No server name(s) defined in the server block listening on port " + std::to_string(_port));
-
+	if (this->port_defined == false)
+		throw std::runtime_error("No port number defined in server block");
 }
 
 // ---------------------------------- SETTERS -----------------------------------------
@@ -81,7 +82,7 @@ void	Config::set_error_page(const int &key, const std::string &value)
 	if (_error_pages.count(key))
 		_error_pages[key] = value;
 	else
-		std::cerr << "No error code: " << key << std::endl; 			//THROW !
+		logger << Logger::warn << "No error code: " << key << std::endl;
 }
 
 
@@ -111,9 +112,9 @@ const Location								&Config::get_location(const std::string& key) const
 		if (key.substr(0, location_path.length()) == location_path)
 			longest_match = it->first;
 	}
-	if (longest_match == "")
-		std::cerr << "Location: '" << key << "' not found" << std::endl; 		//THROW!
-	std::cout << "Matched location: " << longest_match << std::endl;
+	if (longest_match == "") {
+		throw std::runtime_error("No location matched");
+	}
 	return this->_locations.at(longest_match);
 }
 
@@ -125,8 +126,7 @@ const std::string							&Config::get_error_page(const int &key) const
 {
 	std::map<int,std::string>::const_iterator it = _error_pages.find(key);
 	if (it == _error_pages.end())
-		std::cerr << "Error code '" << key << "' not found" << std::endl;	 //THROW!
-		//throw
+		logger << Logger::warn << "Error code '" << key << "' not found" << std::endl;
 	return (it->second);
 }
 
@@ -139,8 +139,13 @@ void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string 
 	size_t		max_size;
 
 	if (enum_value == LISTEN){
+		if (this->port_defined == true)
+			throw std::runtime_error("You can only declare the port number once");
 		value = value_to_unsigned(line, false);
+		if (value < 0 || value > 65535)
+			throw std::runtime_error("Invalid port number. Min port number = 0, max port number = 65535");
 		this->set_port(value);
+		this->port_defined = true;
 	}
 	else if (enum_value == MAX_SIZE){
 		value = value_to_unsigned(line, true);
@@ -158,27 +163,27 @@ void	Config::call_keyword_function(Config::conf_parser &enum_value, std::string 
 //prints out a Config class
 void	Config::print_config_class(void)
 {
-	std::cout << "address : " << this->get_port() << std::endl << std::endl;
+	logger << Logger::info << "address : " << this->get_port() << std::endl << std::endl;
 
 	std::vector<std::string> server_names = this->get_server_names();
-	std::cout << "server name(s) :" << std::endl;
+	logger << Logger::info << "server name(s) :" << std::endl;
 	for (size_t i = 0; i < server_names.size(); i++)
-		std::cout << server_names[i] << std::endl;
-	std::cout << std::endl;
-	std::cout << "root : " << this->get_root() << std::endl << std::endl;
-	std::cout << "max_size : " << this->get_max_size() << std::endl << std::endl;
-	std::cout << "cgi : " << this->get_cgi() << std::endl << std::endl;
+		logger << Logger::info << server_names[i] << std::endl;
+	logger << Logger::info << std::endl;
+	logger << Logger::info << "root : " << this->get_root() << std::endl << std::endl;
+	logger << Logger::info << "max_size : " << this->get_max_size() << std::endl << std::endl;
+	logger << Logger::info << "cgi : " << this->get_cgi() << std::endl << std::endl;
 	for (std::map<std::string, Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
 	{
-		std::cout << "Location : " << it->first << std::endl;
+		logger << Logger::info << "Location : " << it->first << std::endl;
 		Location object = it->second;
 		object.print_location_class();
-		std::cout << std::endl;
+		logger << Logger::info << std::endl;
 	}
-	std::cout << "\nError page :" << std::endl;
+	logger << Logger::info << "\nError page :" << std::endl;
 	for (std::map<int, std::string>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
-		std::cout << it->first << " : " << it->second << std::endl;
-	std::cout << std::endl;
+		logger << Logger::info << it->first << " : " << it->second << std::endl;
+	logger << Logger::info << std::endl;
 }
 
 

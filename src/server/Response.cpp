@@ -89,11 +89,12 @@ bool Response::exceeds_max_body_size() {
 
 void Response::_handle_request() {
 	if (!this->_request.is_allowed_method) {
-		logger << Logger::info << "Method not allowed" << std::endl;
-
-		this->_status_code = HTTP_METHOD_NOT_ALLOWED;
-		// this->_mark_ready();
-		// return;
+		if (this->_request.method != GET && this->_request.method != POST && this->_request.method != DELETE) {
+			this->_status_code = HTTP_NOT_IMPLEMENTED;
+		}
+		else {
+			this->_status_code = HTTP_METHOD_NOT_ALLOWED;
+		}
 	}
 
 	logger << Logger::info << "Received request:\n" << this->_request << std::endl;

@@ -154,8 +154,7 @@ namespace util {
 		status_codes[HTTP_TIMEOUT] = "408 Request Timeout";
 		status_codes[HTTP_ENTITY_TOO_LARGE] = "413 Request Entity Too Large";
 		status_codes[HTTP_INTERNAL_SERVER_ERROR] = "500 Internal Server Error";
-		// status_codes[HTTP_SERVICE_UNAVAILABLE] = "503 Service Unavailable";
-
+		status_codes[HTTP_NOT_IMPLEMENTED] = "501 Not Implemented";
 		return status_codes.at(status_code);
 	}
 }

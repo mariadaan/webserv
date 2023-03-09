@@ -338,6 +338,7 @@ std::map<int,std::string>	return_default_error_map(void)
 	error[408] = "error_pages/408.html";
 	error[413] = "error_pages/413.html";
 	error[500] = "error_pages/500.html";
+	error[501] = "error_pages/501.html";
 	error[505] = "error_pages/505.html";
 	return (error);
 }

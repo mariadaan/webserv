@@ -283,3 +283,7 @@ void Response::handle_cgi_end() {
 void Response::handle_cgi_event(struct kevent& ev_rec) {
 	this->_cgi.handle_event(ev_rec);
 }
+
+void Response::make_sure_cgi_done() {
+	this->_cgi.make_sure_done();
+}

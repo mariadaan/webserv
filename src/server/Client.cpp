@@ -18,6 +18,10 @@ Client::Client(Config& config, Server& server, EventQueue& event_queue, int clie
 		throw(std::runtime_error("Error setting socket to non-blocking"));
 }
 
+Client::~Client() {
+	this->_response.make_sure_cgi_done();
+}
+
 void Client::close(void) {
 	logger << Logger::info << "Marking client for closing " << this->_client_sockfd << std::endl;
 	this->_stream_event_handler.close();
@@ -40,11 +44,23 @@ std::string Client::get_ip(void) const {
 }
 
 void Client::handle_event(struct kevent& ev_rec) {
-	this->_stream_event_handler.handle_event(ev_rec);
+	try {
+		this->_stream_event_handler.handle_event(ev_rec);
+	} catch (std::exception& e) {
+		::close(this->_client_sockfd);
+		this->_event_queue.remove_fd(this->_client_sockfd);
+		this->_server.remove_client(this->_client_sockfd);
+	}
 }
 
 void Client::handle_cgi_event(struct kevent& ev_rec) {
-	this->_response.handle_cgi_event(ev_rec);
+	try {
+		this->_response.handle_cgi_event(ev_rec);
+	} catch (std::exception& e) {
+		::close(this->_client_sockfd);
+		this->_event_queue.remove_fd(this->_client_sockfd);
+		this->_server.remove_client(this->_client_sockfd);
+	}
 }
 
 void Client::_read_data(std::string str) {

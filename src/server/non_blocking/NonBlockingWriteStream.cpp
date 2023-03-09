@@ -72,17 +72,17 @@ void NonBlockingWriteStream::_handle_state() {
 
 void NonBlockingWriteStream::_write_part() {
 	size_t size = this->_write_buffer.size();
-	ssize_t size_written = ::write(this->_fd, this->_write_buffer.c_str(), size);
-	if (size_written == -1) {
-		throw std::runtime_error("Error writing to socket");
+	ssize_t bytes_written = ::write(this->_fd, this->_write_buffer.c_str(), size);
+	if (bytes_written < 0) {
+		throw std::runtime_error("NonBlockingWriteStream: Error occurred while writing");
 	}
 	this->_write_state = CANNOT_WRITE;
-	if ((size_t)size_written == size) {
+	if ((size_t)bytes_written == size) {
 		this->_write_buffer = "";
 		this->_want_to_write = false;
 		this->_handle_state();
 		return ;
 	}
-	this->_write_buffer = this->_write_buffer.substr(size_written);
+	this->_write_buffer = this->_write_buffer.substr(bytes_written);
 	this->_want_to_write = true;
 }

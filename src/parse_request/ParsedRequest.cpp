@@ -139,16 +139,20 @@ void ParsedRequest::_parse_metadata() {
 	lines.erase(lines.begin());
 	this->headers = ParsedRequest::_parse_headers(lines);
 	this->is_chunked = this->_is_chunked();
-	try {
-		Location location = this->_config->get_location(this->path);
-		this->location = location;
-		this->location.print_location_class();
-		this->is_allowed_method = this->location.get_request_methods(this->method_string);
+	if (this->method == UNKNOWN) {
+		this->is_allowed_method = false;
 	}
-	catch(const std::exception& e) {
-		logger << Logger::error << e.what() << '\n';
+	else {
+		try {
+			Location location = this->_config->get_location(this->path);
+			this->location = location;
+			this->location.print_location_class();
+			this->is_allowed_method = this->location.get_request_methods(this->method_string);
+		}
+		catch(const std::exception& e) {
+			logger << Logger::error << e.what() << '\n';
+		}
 	}
-	
 }
 
 Method ParsedRequest::_parse_method(std::string method_str) {
@@ -163,7 +167,7 @@ Method ParsedRequest::_parse_method(std::string method_str) {
 	methods["TRACE"] = TRACE;
 	methods["PATCH"] = PATCH;
 	if (methods.count(method_str) == 0)
-		throw std::runtime_error("Invalid method");
+		return UNKNOWN;
 	return methods[method_str];
 }
 

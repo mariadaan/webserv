@@ -25,6 +25,7 @@ class NonBlockingReadStream {
 
 		int _fd;
 		NonBlockingStreamReader* _reader;
+		bool _has_ended;
 };
 
 #endif

@@ -4,11 +4,15 @@
 NonBlockingReadStream::NonBlockingReadStream(int fd, NonBlockingStreamReader& reader)
 	: _fd(fd)
 	, _reader(&reader)
+	, _has_ended(false)
 {
 }
 
 void NonBlockingReadStream::_end() {
-	this->_reader->_read_end();
+	if (!this->_has_ended) {
+		this->_reader->_read_end();
+		this->_has_ended = true;
+	}
 }
 
 void NonBlockingReadStream::handle_event(struct kevent& ev_rec) {
